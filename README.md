@@ -1,14 +1,15 @@
 # Rodeway 🚘✨
 > **AI-Enhanced AR Navigation & Smart BLE Turn Indicator System**  
-> 👨‍💻 **Developed by:** **Yohesh Periyasamy**
+> 👨‍💻 **Developed by:** **[Yohesh Periyasamy](https://www.linkedin.com/in/yohesh-periyasamy-0529643a9/)**
 
-
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/yohesh-periyasamy-0529643a9/)
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Unity](https://img.shields.io/badge/Unity-101010?style=for-the-badge&logo=unity&logoColor=white)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)
 ![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)
 ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+
 
 **Rodeway** is an advanced, next-generation navigation system that combines **Augmented Reality (AR)**, **Artificial Intelligence (AI)** computer vision for lane detection, and an **IoT ESP32 Smart BLE Indicator** for automated physical vehicle turn signaling.
 
@@ -104,7 +105,8 @@ Rodeway/
 
 ## 👨‍💻 Developer
 
-Developed with ❤️ by **Yohesh Periyasamy** ([VistaraTech](https://github.com/vistaratech)).
+Developed with ❤️ by **[Yohesh Periyasamy](https://www.linkedin.com/in/yohesh-periyasamy-0529643a9/)** ([GitHub Profile](https://github.com/vistaratech)).
+
 
 ---
 
