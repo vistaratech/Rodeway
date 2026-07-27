@@ -1,5 +1,7 @@
 # Rodeway 🚘✨
-> **AI-Enhanced AR Navigation & Smart BLE Turn Indicator System**
+> **AI-Enhanced AR Navigation & Smart BLE Turn Indicator System**  
+> 👨‍💻 **Developed by:** **Yohesh Periyasamy**
+
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Unity](https://img.shields.io/badge/Unity-101010?style=for-the-badge&logo=unity&logoColor=white)
@@ -100,6 +102,13 @@ Rodeway/
 
 ---
 
+## 👨‍💻 Developer
+
+Developed with ❤️ by **Yohesh Periyasamy** ([VistaraTech](https://github.com/vistaratech)).
+
+---
+
 ## 📄 License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
