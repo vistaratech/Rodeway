@@ -55,5 +55,11 @@
 	<string>Rodeway uses Bluetooth to communicate with ESP32 smart indicators.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Rodeway requires camera access for AR navigation mode.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>
