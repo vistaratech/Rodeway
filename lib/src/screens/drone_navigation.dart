@@ -1,3 +1,4 @@
+import 'package:cleadr/src/screens/maps_navigation.dart';
 import 'package:cleadr/src/services/drone_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -38,44 +39,9 @@ class _DroneNavigationScreenState extends State<DroneNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117),
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Background Placeholder / Map Simulation Overlay
-          Positioned.fill(
-            child: Container(
-              color: const Color(0xFF161B22),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.map_sharp,
-                      size: 64,
-                      color: Colors.white.withValues(alpha: 0.15),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Drone Autopilot Map Interface',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Tap anywhere to add Waypoints (W1, W2, W3...)',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
           // Waypoints Overlay List on Map
           if (_drone.waypoints.isNotEmpty)

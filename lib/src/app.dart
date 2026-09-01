@@ -21,6 +21,7 @@ class _CleadrAppState extends State<CleadrApp> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initServices();
     });
@@ -28,9 +29,6 @@ class _CleadrAppState extends State<CleadrApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Hide the status bar
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
     return MaterialApp(
       navigatorKey: _navigatorKey,
       debugShowCheckedModeBanner: false,

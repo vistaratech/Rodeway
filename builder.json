@@ -1,0 +1,22 @@
+{
+  "project": "cleadr",
+  "platform": "flutter",
+  "github": {
+    "owner": "vistaratech",
+    "repo": "Rodeway"
+  },
+  "ios": {
+    "path": "ios",
+    "configuration": "Release"
+  },
+  "flutter": {
+    "watch": {
+      "dirs": [
+        "lib"
+      ],
+      "patterns": [
+        ".dart"
+      ]
+    }
+  }
+}

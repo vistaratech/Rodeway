@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cleadr/src/screens/loading.dart';
 import 'package:cleadr/src/services/ble_service.dart';
 import 'package:cleadr/src/services/location_service.dart';
@@ -19,7 +20,7 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
 
   late final UnityWidget _unityWidget;
   UnityWidgetController? _unityWidgetController;
-  // late final StreamSubscription<NavInfoEvent> _navInfoEventStream;
+  StreamSubscription<NavInfoEvent>? _navInfoSubscription;
 
   late final String _unityGameObject;
   late final String _unityMethodName;
@@ -41,6 +42,7 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
 
   @override
   void dispose() {
+    _navInfoSubscription?.cancel();
     _unityWidgetController?.pause();
     _unityWidgetController?.dispose();
     super.dispose();
@@ -62,12 +64,8 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
       _fetchAndSendRoutePath();
     });
 
-    // _navInfoEventStream = GoogleMapsNavigator.setNavInfoListener(
-    //   _onNavInfoEvent,
-    //   numNextStepsToPreview: null,
-    // );
-
-    GoogleMapsNavigator.setNavInfoListener(
+    _navInfoSubscription?.cancel();
+    _navInfoSubscription = GoogleMapsNavigator.setNavInfoListener(
       _onNavInfoEvent,
       numNextStepsToPreview: null,
     );

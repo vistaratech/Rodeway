@@ -45,5 +45,15 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Rodeway requires location access for turn-by-turn navigation and map routing.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Rodeway requires background location to continue navigation when the app is minimized.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Rodeway connects to your vehicle BLE smart indicator device.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Rodeway uses Bluetooth to communicate with ESP32 smart indicators.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Rodeway requires camera access for AR navigation mode.</string>
 </dict>
 </plist>

@@ -4,6 +4,7 @@ import 'package:cleadr/src/screens/drone_navigation.dart';
 import 'package:cleadr/src/screens/maps_navigation.dart';
 import 'package:cleadr/src/screens/smart_navigation.dart';
 import 'package:cleadr/src/services/ble_service.dart';
+import 'package:cleadr/src/services/navigation_state_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -51,6 +52,10 @@ class _NavigationScreenState extends State<NavigationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape ||
+        _orientation == DeviceOrientation.landscapeLeft ||
+        _orientation == DeviceOrientation.landscapeRight;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -58,6 +63,7 @@ class _NavigationScreenState extends State<NavigationScreen>
         final shouldQuit = await _showQuitConfirmationDialog(context);
         if (shouldQuit == true && context.mounted) {
           await BleService.instance.onNavigationEnded();
+          await NavigationStateService.instance.setNavigating(false);
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -66,24 +72,27 @@ class _NavigationScreenState extends State<NavigationScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // Mode 1: Standard / Satellite MAPS
-            if (_currentMode == NavigationMode.maps)
+            // Shared Single Native 3D Navigation Map Layer
+            if (_currentMode != NavigationMode.ar)
               MapsNavigationScreen(
                 isMinified: false,
                 destinationLocation: widget.destinationLocation,
                 mapType: _isSatelliteView ? MapType.satellite : MapType.normal,
-              )
+              ),
+
             // Mode 2: AR View
-            else if (_currentMode == NavigationMode.ar)
-              const ARNavigationScreen()
-            // Mode 3: Drone Autopilot & GCS Dashboard
-            else if (_currentMode == NavigationMode.drone)
+            if (_currentMode == NavigationMode.ar)
+              const ARNavigationScreen(),
+
+            // Mode 3: Drone Autopilot HUD Overlay
+            if (_currentMode == NavigationMode.drone)
               DroneNavigationScreen(
                 destinationLocation: widget.destinationLocation,
                 mapType: _isSatelliteView ? MapType.satellite : MapType.normal,
-              )
-            // Mode 4: SMART NAV Timeline Mode
-            else
+              ),
+
+            // Mode 4: SMART NAV Timeline Mode HUD Overlay
+            if (_currentMode == NavigationMode.smartNav)
               SmartNavigationScreen(
                 destinationLocation: widget.destinationLocation,
                 mapType: _isSatelliteView ? MapType.satellite : MapType.normal,
@@ -94,7 +103,7 @@ class _NavigationScreenState extends State<NavigationScreen>
               Positioned(
                 left: 20,
                 bottom: 24,
-                width: _orientation == DeviceOrientation.landscapeLeft
+                width: isLandscape
                     ? _miniMapWidth.clamp(140.0, MediaQuery.of(context).size.width * 0.45)
                     : _miniMapWidth.clamp(140.0, MediaQuery.of(context).size.width * 0.85),
                 height: _miniMapHeight.clamp(140.0, MediaQuery.of(context).size.height * 0.65),
@@ -190,6 +199,7 @@ class _NavigationScreenState extends State<NavigationScreen>
                 final shouldQuit = await _showQuitConfirmationDialog(context);
                 if (shouldQuit == true && context.mounted) {
                   await BleService.instance.onNavigationEnded();
+                  await NavigationStateService.instance.setNavigating(false);
                   if (context.mounted) {
                     Navigator.of(context).pop();
                   }
@@ -519,42 +529,66 @@ class _NavigationScreenState extends State<NavigationScreen>
                 child: Divider(color: Colors.black12, height: 1),
               ),
 
-              // Row 3: Indicator Controls (Left, Right, Off)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildControlButton(
-                      label: 'Left',
-                      icon: Icons.turn_left,
-                      color: Colors.teal.shade800,
-                      bgColor: Colors.teal.withValues(alpha: 0.12),
-                      borderColor: Colors.teal.shade300,
-                      onTap: () => BleService.instance.sendCommand('LEFT_ON'),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _buildControlButton(
-                      label: 'Right',
-                      icon: Icons.turn_right,
-                      color: Colors.amber.shade900,
-                      bgColor: Colors.amber.withValues(alpha: 0.12),
-                      borderColor: Colors.amber.shade400,
-                      onTap: () => BleService.instance.sendCommand('RIGHT_ON'),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _buildControlButton(
-                      label: 'Off',
-                      icon: Icons.power_settings_new,
-                      color: Colors.grey.shade800,
-                      bgColor: Colors.black.withValues(alpha: 0.05),
-                      borderColor: Colors.black26,
-                      onTap: () => BleService.instance.sendCommand('ALL_OFF'),
-                    ),
-                  ),
-                ],
+              // Row 3: Interactive Indicator Testing Controls (Left, Right, Off)
+              ValueListenableBuilder<String?>(
+                valueListenable: BleService.instance.lastSentCommand,
+                builder: (context, cmd, _) {
+                  final isLeft = cmd?.contains('LEFT') ?? false;
+                  final isRight = cmd?.contains('RIGHT') ?? false;
+                  final isOff = cmd?.contains('OFF') ?? false;
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _buildControlButton(
+                          label: 'Left',
+                          icon: Icons.turn_left,
+                          isActive: isLeft,
+                          color: isLeft ? Colors.white : Colors.teal.shade800,
+                          bgColor: isLeft ? Colors.teal.shade600 : Colors.teal.withValues(alpha: 0.12),
+                          borderColor: isLeft ? Colors.teal.shade800 : Colors.teal.shade400,
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            BleService.instance.sendCommand('LEFT_ON', force: true);
+                            _showBleSnackbar('Testing Left Indicator (GPIO 2 / OUT 1&2)...', Colors.teal.shade700);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _buildControlButton(
+                          label: 'Right',
+                          icon: Icons.turn_right,
+                          isActive: isRight,
+                          color: isRight ? Colors.white : Colors.amber.shade900,
+                          bgColor: isRight ? Colors.amber.shade600 : Colors.amber.withValues(alpha: 0.15),
+                          borderColor: isRight ? Colors.amber.shade800 : Colors.amber.shade500,
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            BleService.instance.sendCommand('RIGHT_ON', force: true);
+                            _showBleSnackbar('Testing Right Indicator (GPIO 3 / OUT 3&4)...', Colors.amber.shade800);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: _buildControlButton(
+                          label: 'Off',
+                          icon: Icons.power_settings_new,
+                          isActive: isOff,
+                          color: isOff ? Colors.white : Colors.grey.shade800,
+                          bgColor: isOff ? Colors.grey.shade700 : Colors.black.withValues(alpha: 0.05),
+                          borderColor: isOff ? Colors.black87 : Colors.black26,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            BleService.instance.sendCommand('ALL_OFF', force: true);
+                            _showBleSnackbar('Indicators OFF', Colors.grey.shade800);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -621,30 +655,46 @@ class _NavigationScreenState extends State<NavigationScreen>
     required Color bgColor,
     required Color borderColor,
     required VoidCallback onTap,
+    bool isActive = false,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 0.8),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: borderColor,
+              width: isActive ? 2.2 : 1.0,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: borderColor.withValues(alpha: 0.45),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 3),
+              Icon(icon, color: color, size: isActive ? 22 : 20),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
                   color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+                  fontSize: isActive ? 12 : 11,
+                  fontWeight: isActive ? FontWeight.w900 : FontWeight.bold,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],

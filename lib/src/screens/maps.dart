@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:cleadr/src/screens/maps_search.dart';
 import 'package:cleadr/src/screens/navigation.dart';
 import 'package:cleadr/src/services/location_service.dart';
+import 'package:cleadr/src/services/navigation_state_service.dart';
 import 'package:cleadr/src/services/services.dart';
 import 'package:cleadr/src/util/functions.dart';
 import 'package:cleadr/src/util/place.dart';
@@ -144,10 +145,11 @@ class _MapsScreenState extends State<MapsScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(24),
-                                onTap: () async {
+                                 onTap: () async {
                                   await _removeRoutePreview();
                                   await _removeWaypointMarker();
                                   _destinationPlace = Place();
+                                  await NavigationStateService.instance.clearDestination();
                                   setState(() {});
                                 },
                                 child: const Padding(
@@ -266,26 +268,42 @@ class _MapsScreenState extends State<MapsScreen> {
                             fontSize: 15,
                           ),
                         ),
-                        onPressed: () {
+                        onPressed: () async {
                           if (_isRoutePreview == false) {
                             // Route button
-                            _showRoutePreview();
-                            _isRoutePreview = true;
-                            setState(() {});
+                            await _showRoutePreview();
                           } else {
                             // Start button
-                            _disposeNavigator();
+                            await NavigationStateService.instance.setNavigating(true);
 
-                            Navigator.push(
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
-                                    // Navigation Screen
                                     NavigationScreen(
                                   destinationLocation: _destinationLocation!,
                                 ),
                               ),
                             );
+
+                            // Restore map session & markers upon returning from NavigationScreen
+                            await NavigationStateService.instance.init();
+                            if (NavigationStateService.instance.hasActiveDestination) {
+                              _destinationLocation = NavigationStateService.instance.destinationLocation;
+                              _destinationPlace = NavigationStateService.instance.activePlace ?? Place();
+                              _isRoutePreview = NavigationStateService.instance.isRoutePreview;
+                              if (_destinationLocation != null) {
+                                await _updateWaypointMarker(_destinationLocation!);
+                                if (_isRoutePreview) {
+                                  await _showRoutePreview();
+                                }
+                              }
+                            } else {
+                              await _removeRoutePreview();
+                              await _removeWaypointMarker();
+                              _destinationPlace = Place();
+                            }
+                            if (mounted) setState(() {});
                           }
                         },
                       ),
@@ -304,6 +322,8 @@ class _MapsScreenState extends State<MapsScreen> {
   Future<void> _initNavigator() async {
     if (mounted) {
       try {
+        await NavigationStateService.instance.init();
+
         // Get current location (filtered & smoothed)
         debugLog("MapsScreen: Getting current position...");
         Position currentPosition = await LocationService().getCurrentPosition();
@@ -318,12 +338,22 @@ class _MapsScreenState extends State<MapsScreen> {
         await GoogleMapsNavigator.initializeNavigationSession();
         debugLog("MapsScreen: Navigation session initialized.");
 
+        if (NavigationStateService.instance.hasActiveDestination) {
+          _destinationLocation = NavigationStateService.instance.destinationLocation;
+          _destinationPlace = NavigationStateService.instance.activePlace ?? Place();
+          _isRoutePreview = NavigationStateService.instance.isRoutePreview;
+        } else {
+          _destinationPlace = Place();
+        }
+
         _navigationView = GoogleMapsNavigationView(
           initialNavigationUIEnabledPreference:
               NavigationUIEnabledPreference.disabled, // Maps only session
 
-          initialCameraPosition:
-              CameraPosition(target: _currentLocation, zoom: _zoom),
+          initialCameraPosition: CameraPosition(
+            target: _destinationLocation ?? _currentLocation,
+            zoom: _zoom,
+          ),
           initialCompassEnabled: false,
           initialMapToolbarEnabled: false,
           initialZoomControlsEnabled: false,
@@ -334,9 +364,6 @@ class _MapsScreenState extends State<MapsScreen> {
               _onDestinationClicked, // TODO: _onMapClicked - Snaps to closest place pin
           onMapLongClicked: _onDestinationClicked,
         );
-
-        // Initialise _destinationPlace
-        _destinationPlace = Place();
 
         _isLoading = false;
         setState(() {});
@@ -365,6 +392,13 @@ class _MapsScreenState extends State<MapsScreen> {
     _navigationViewController = controller;
     await controller.setMyLocationEnabled(true);
     await controller.settings.setMyLocationButtonEnabled(false);
+
+    if (_destinationLocation != null) {
+      await _updateWaypointMarker(_destinationLocation!);
+      if (_isRoutePreview) {
+        await _showRoutePreview();
+      }
+    }
   }
 
   void _onCameraMove(CameraPosition cameraPosition) {
@@ -408,6 +442,12 @@ class _MapsScreenState extends State<MapsScreen> {
     _destinationPlace.startTime = startTime;
     _destinationPlace.endTime = endTime;
 
+    await NavigationStateService.instance.setDestination(
+      _destinationPlace,
+      destinationLocation,
+      isRoutePreview: _isRoutePreview,
+    );
+
     setState(() {});
   }
 
@@ -444,11 +484,12 @@ class _MapsScreenState extends State<MapsScreen> {
   }
 
   Future<void> _showRoutePreview() async {
+    if (_destinationLocation == null) return;
     await GoogleMapsNavigator.setDestinations(
       Destinations(
         waypoints: <NavigationWaypoint>[
           NavigationWaypoint.withLatLngTarget(
-            title: "${_destinationPlace.name}",
+            title: "${_destinationPlace.name ?? 'Destination'}",
             target: _destinationLocation,
           )
         ],
@@ -463,11 +504,14 @@ class _MapsScreenState extends State<MapsScreen> {
     );
 
     await _navigationViewController.showRouteOverview();
+    _isRoutePreview = true;
+    await NavigationStateService.instance.setRoutePreview(true);
     setState(() {});
   }
 
   Future<void> _removeRoutePreview() async {
     await GoogleMapsNavigator.cleanup();
     _isRoutePreview = false;
+    await NavigationStateService.instance.setRoutePreview(false);
   }
 }

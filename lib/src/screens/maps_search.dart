@@ -236,22 +236,18 @@ class _MapsSearchScreenState extends State<MapsSearchScreen> {
                       setState(() {});
                     },
                     onChanged: (text) {
+                      _debounce?.cancel();
                       if (text.isNotEmpty) {
-                        if (kDebugMode) {
-                          _debounce?.cancel();
-                          _debounce =
-                              Timer(const Duration(milliseconds: 400), () {
-                            _fetchPlacePredictions(text);
-                          });
-                        } else {
+                        _debounce = Timer(const Duration(milliseconds: 400), () {
                           _fetchPlacePredictions(text);
-                        }
+                        });
                       } else {
                         _placePredictions.clear();
                         setState(() {});
                       }
                     },
                     onEditingComplete: () {
+                      _debounce?.cancel();
                       if (_searchBarController.text.isNotEmpty) {
                         _fetchPlacePredictions(_searchBarController.text);
                       } else {
@@ -306,6 +302,7 @@ class _MapsSearchScreenState extends State<MapsSearchScreen> {
   }
 
   void _disposeSearchBar() {
+    _debounce?.cancel();
     _searchBar.dispose();
     _searchBarController.dispose();
   }

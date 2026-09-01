@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:cleadr/src/screens/maps_navigation.dart';
 import 'package:cleadr/src/services/ble_service.dart';
+import 'package:cleadr/src/services/location_service.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -36,19 +37,17 @@ class _SmartNavigationScreenState extends State<SmartNavigationScreen> {
   }
 
   void _startSpeedTracking() {
-    const locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 1,
-    );
-
-    _positionSubscription = Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+    LocationService().startListening();
+    _positionSubscription = LocationService().positionStream.listen(
       (Position position) {
         if (!mounted) return;
         // speed is in m/s, convert to km/h
         final speedKmH = (position.speed * 3.6).clamp(0.0, 180.0);
-        setState(() {
-          _currentSpeedKmH = speedKmH;
-        });
+        if ((speedKmH - _currentSpeedKmH).abs() >= 0.5) {
+          setState(() {
+            _currentSpeedKmH = speedKmH;
+          });
+        }
       },
     );
   }
@@ -62,10 +61,15 @@ class _SmartNavigationScreenState extends State<SmartNavigationScreen> {
         final maneuver = step.maneuver.name;
         final distanceMeters = event.navInfo.distanceToCurrentStepMeters;
 
-        setState(() {
-          _currentManeuver = _formatManeuverText(maneuver);
-          _distanceToNextManeuver = distanceMeters ?? 0;
-        });
+        final newManeuver = _formatManeuverText(maneuver);
+        final newDistance = distanceMeters ?? 0;
+
+        if (newManeuver != _currentManeuver || newDistance != _distanceToNextManeuver) {
+          setState(() {
+            _currentManeuver = newManeuver;
+            _distanceToNextManeuver = newDistance;
+          });
+        }
 
         // Trigger BLE signal processing
         BleService.instance.processManeuver(
@@ -78,13 +82,14 @@ class _SmartNavigationScreenState extends State<SmartNavigationScreen> {
   }
 
   String _formatManeuverText(String rawManeuver) {
-    if (rawManeuver.contains('RIGHT')) return 'Turn Right';
-    if (rawManeuver.contains('LEFT')) return 'Turn Left';
-    if (rawManeuver.contains('UTURN')) return 'Make U-Turn';
-    if (rawManeuver.contains('MERGE')) return 'Merge';
-    if (rawManeuver.contains('RAMP')) return 'Take Ramp';
-    if (rawManeuver.contains('ROUNDABOUT')) return 'Enter Roundabout';
-    if (rawManeuver.contains('STRAIGHT')) return 'Continue Straight';
+    final upper = rawManeuver.toUpperCase();
+    if (upper.contains('LEFT') || upper.contains('COUNTERCLOCKWISE')) return 'Turn Left';
+    if (upper.contains('RIGHT') || upper.contains('CLOCKWISE')) return 'Turn Right';
+    if (upper.contains('UTURN')) return 'Make U-Turn';
+    if (upper.contains('MERGE')) return 'Merge';
+    if (upper.contains('RAMP')) return 'Take Ramp';
+    if (upper.contains('ROUNDABOUT')) return 'Enter Roundabout';
+    if (upper.contains('STRAIGHT')) return 'Continue Straight';
     return 'Head to Route';
   }
 
@@ -98,14 +103,10 @@ class _SmartNavigationScreenState extends State<SmartNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Underlying 3D Maps View
-          MapsNavigationScreen(
-            isMinified: false,
-            destinationLocation: widget.destinationLocation,
-            mapType: widget.mapType,
-          ),
+          // Smart Navigation Timeline Card (Matching reference design image)
 
           // Smart Navigation Timeline Card (Matching reference design image)
           Positioned(

@@ -24,7 +24,43 @@ class Place {
     this.formatted_address,
     this.lat,
     this.lng,
+    this.distanceStr,
+    this.durationStr,
+    this.duration,
+    this.startTime,
+    this.endTime,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'place_id': place_id,
+      'name': name,
+      'formatted_address': formatted_address,
+      'lat': lat,
+      'lng': lng,
+      'distanceStr': distanceStr,
+      'durationStr': durationStr,
+      'duration': duration,
+      'startTime': startTime?.toIso8601String(),
+      'endTime': endTime?.toIso8601String(),
+    };
+  }
+
+  factory Place.fromJson(Map<String, dynamic> json) {
+    return Place(
+      place_id: json['place_id'] as String?,
+      name: json['name'] as String?,
+      formatted_address: json['formatted_address'] as String?,
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
+      distanceStr: json['distanceStr'] as String?,
+      durationStr: json['durationStr'] as String?,
+      duration: json['duration'] as int?,
+      startTime: json['startTime'] != null ? DateTime.tryParse(json['startTime'] as String) : null,
+      endTime: json['endTime'] != null ? DateTime.tryParse(json['endTime'] as String) : null,
+    );
+  }
+
 
   Widget PlaceDetailsCard(VoidCallback onCancel) {
     return Positioned(

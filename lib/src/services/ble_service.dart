@@ -378,16 +378,18 @@ class BleService {
   // ─────────────────────────────────────────────
 
   /// Send a raw BLE command string to the ESP32.
-  ///
-  /// Skips if the same command was already sent (duplicate prevention).
-  Future<void> sendCommand(String command) async {
+  Future<void> sendCommand(String command, {bool force = false}) async {
+    final timestamp = '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}:${DateTime.now().second.toString().padLeft(2, '0')}';
+
     if (_writeCharacteristic == null) {
       debugLog('BleService: Cannot send "$command" — not connected');
+      _lastBleCommand = command;
+      lastSentCommand.value = '$command ($timestamp)';
       return;
     }
 
-    // Duplicate prevention
-    if (command == _lastBleCommand) {
+    // Duplicate prevention (unless force is true)
+    if (!force && command == _lastBleCommand) {
       return;
     }
 
@@ -398,11 +400,12 @@ class BleService {
         value: bytes,
       );
       _lastBleCommand = command;
-      lastSentCommand.value = '$command (${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}:${DateTime.now().second.toString().padLeft(2, '0')})';
+      lastSentCommand.value = '$command ($timestamp)';
       debugLog('BleService: Sent "$command" ✓');
       print('[BleService] Successfully transmitted signal to ESP32: $command');
     } catch (e) {
       debugLog('BleService: Failed to send "$command": $e');
+      lastSentCommand.value = '$command ($timestamp)';
     }
   }
 
@@ -428,8 +431,12 @@ class BleService {
     if (maneuver == null) return;
 
     final lowerManeuver = maneuver.toLowerCase();
-    final isRight = lowerManeuver.contains('right') || lowerManeuver.contains('clockwise');
-    final isLeft = lowerManeuver.contains('left') || lowerManeuver.contains('counterclockwise');
+    final isLeft = lowerManeuver.contains('left') ||
+        lowerManeuver.contains('counterclockwise') ||
+        lowerManeuver.contains('counter_clockwise');
+    final isRight = (lowerManeuver.contains('right') ||
+        lowerManeuver.contains('clockwise')) &&
+        !isLeft;
 
     if (!isRight && !isLeft) {
       // Straight or non-turn maneuver → turn off light if it was on
@@ -449,10 +456,10 @@ class BleService {
     }
 
     // Within 120m (e.g. 100m) of turn → send signal to ESP32!
-    if (isRight) {
-      sendCommand('RIGHT_ON');
-    } else if (isLeft) {
+    if (isLeft) {
       sendCommand('LEFT_ON');
+    } else if (isRight) {
+      sendCommand('RIGHT_ON');
     }
   }
 

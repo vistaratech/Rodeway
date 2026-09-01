@@ -27,9 +27,13 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-// ── Pin Configuration ──────────────────────────────────────
-#define PIN_RIGHT   2    // Right indicator LED
-#define PIN_LEFT    3    // Left  indicator LED
+// ── Pin Configuration for Motor Driver Module ───────────────
+// Channel A (OUT1 & OUT2 - Left Turn) : IN1 = GPIO 2, IN2 = GPIO 4 (or GND)
+// Channel B (OUT3 & OUT4 - Right Turn): IN3 = GPIO 3, IN4 = GPIO 5 (or GND)
+#define PIN_LEFT        2    // GPIO 2 -> IN1 -> OUT1/OUT2 (Left Turn)
+#define PIN_LEFT_GND    4    // GPIO 4 -> IN2 -> Ground reference for Left Turn
+#define PIN_RIGHT       3    // GPIO 3 -> IN3 -> OUT3/OUT4 (Right Turn)
+#define PIN_RIGHT_GND   5    // GPIO 5 -> IN4 -> Ground reference for Right Turn
 
 // ── BLE UUIDs (must match ble_service.dart) ───────────────
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -107,8 +111,10 @@ class CharacteristicCallbacks : public BLECharacteristicCallbacks {
 //  Helper: Turn off all LEDs immediately
 // ──────────────────────────────────────────────────────────
 void allOff() {
-  digitalWrite(PIN_RIGHT, LOW);
-  digitalWrite(PIN_LEFT,  LOW);
+  digitalWrite(PIN_RIGHT,     LOW);
+  digitalWrite(PIN_RIGHT_GND, LOW);
+  digitalWrite(PIN_LEFT,      LOW);
+  digitalWrite(PIN_LEFT_GND,  LOW);
   blinkOn = false;
 }
 
@@ -124,12 +130,18 @@ void handleBlink() {
     blinkOn = !blinkOn;
 
     if (indicatorState == RIGHT_BLINK) {
-      digitalWrite(PIN_RIGHT, blinkOn ? HIGH : LOW);
-      digitalWrite(PIN_LEFT,  LOW);
+      // Channel A (OUT1 & OUT2) -> RIGHT
+      digitalWrite(PIN_RIGHT,     blinkOn ? HIGH : LOW);
+      digitalWrite(PIN_RIGHT_GND, LOW);
+      digitalWrite(PIN_LEFT,      LOW);
+      digitalWrite(PIN_LEFT_GND,  LOW);
     }
     else if (indicatorState == LEFT_BLINK) {
-      digitalWrite(PIN_LEFT,  blinkOn ? HIGH : LOW);
-      digitalWrite(PIN_RIGHT, LOW);
+      // Channel B (OUT3 & OUT4) -> LEFT
+      digitalWrite(PIN_LEFT,      blinkOn ? HIGH : LOW);
+      digitalWrite(PIN_LEFT_GND,  LOW);
+      digitalWrite(PIN_RIGHT,     LOW);
+      digitalWrite(PIN_RIGHT_GND, LOW);
     }
   }
 }
@@ -142,8 +154,10 @@ void setup() {
   Serial.println("\n[Rodeway] ESP32 BLE Turn Indicator starting...");
 
   // GPIO setup
-  pinMode(PIN_RIGHT, OUTPUT);
-  pinMode(PIN_LEFT,  OUTPUT);
+  pinMode(PIN_RIGHT,     OUTPUT);
+  pinMode(PIN_RIGHT_GND, OUTPUT);
+  pinMode(PIN_LEFT,      OUTPUT);
+  pinMode(PIN_LEFT_GND,  OUTPUT);
   allOff();
 
   // ── BLE Init ──
@@ -185,6 +199,31 @@ void setup() {
 void loop() {
   // Handle LED blinking
   handleBlink();
+
+  // Check for Serial commands for easy multimeter testing over USB
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    cmd.toUpperCase();
+
+    if (cmd == "RIGHT_ON" || cmd == "RIGHT") {
+      indicatorState = RIGHT_BLINK;
+      blinkOn = false;
+      lastBlinkTime = 0;
+      Serial.println("[SERIAL] → RIGHT indicator ON (GPIO 3 -> OUT3 & OUT4)");
+    }
+    else if (cmd == "LEFT_ON" || cmd == "LEFT") {
+      indicatorState = LEFT_BLINK;
+      blinkOn = false;
+      lastBlinkTime = 0;
+      Serial.println("[SERIAL] → LEFT indicator ON (GPIO 2 -> OUT1 & OUT2)");
+    }
+    else if (cmd == "ALL_OFF" || cmd == "OFF") {
+      indicatorState = IDLE;
+      allOff();
+      Serial.println("[SERIAL] → ALL OFF");
+    }
+  }
 
   // Restart advertising after disconnect (so app can reconnect)
   if (!deviceConnected && oldConnected) {
