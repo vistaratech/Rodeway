@@ -23,7 +23,6 @@ static UnityFramework* _instance = nil;
 - (void)quitApplication:(int)exitCode {}
 - (void)sendMessageToGOWithName:(const char*)goName functionName:(const char*)name message:(const char*)msg {}
 - (void)registerFrameworkListener:(id<UnityFrameworkListener>)obj {}
-- (void)register:(id<UnityFrameworkListener>)obj {}
 - (void)unregisterFrameworkListener:(id<UnityFrameworkListener>)obj {}
 - (UnityAppController*)appController { return [[UnityAppController alloc] init]; }
 @end

@@ -7,14 +7,14 @@
 - (void)unityDidQuit:(NSNotification*)notification;
 @end
 
-typedef void (*UnityMessageHandler)(const char* message);
-typedef void (*UnitySceneLoadedHandler)(const char* name, const int* buildIndex, const bool* isLoaded, const bool* isValid);
+typedef void (^UnityMessageHandler)(const char* message);
+typedef void (^UnitySceneLoadedHandler)(const char* name, const int* buildIndex, const bool* isLoaded, const bool* isValid);
 
 @interface UnityAppController : NSObject <UIApplicationDelegate>
 @property (nonatomic, strong) UIWindow* window;
 @property (nonatomic, strong) UIView* rootView;
-@property (nonatomic, assign) UnityMessageHandler unityMessageHandler;
-@property (nonatomic, assign) UnitySceneLoadedHandler unitySceneLoadedHandler;
+@property (nonatomic, copy) UnityMessageHandler unityMessageHandler;
+@property (nonatomic, copy) UnitySceneLoadedHandler unitySceneLoadedHandler;
 
 - (void)applicationWillResignActive:(UIApplication*)application;
 - (void)applicationDidEnterBackground:(UIApplication*)application;
@@ -34,7 +34,6 @@ typedef void (*UnitySceneLoadedHandler)(const char* name, const int* buildIndex,
 - (void)quitApplication:(int)exitCode;
 - (void)sendMessageToGOWithName:(const char*)goName functionName:(const char*)name message:(const char*)msg;
 - (void)registerFrameworkListener:(id<UnityFrameworkListener>)obj;
-- (void)register:(id<UnityFrameworkListener>)obj;
 - (void)unregisterFrameworkListener:(id<UnityFrameworkListener>)obj;
 - (UnityAppController*)appController;
 @end
