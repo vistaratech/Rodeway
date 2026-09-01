@@ -1,6 +1,12 @@
 #import "UnityFramework.framework/Headers/UnityFramework.h"
 
 @implementation UnityAppController
+- (void)applicationWillResignActive:(UIApplication*)application {}
+- (void)applicationDidEnterBackground:(UIApplication*)application {}
+- (void)applicationWillEnterForeground:(UIApplication*)application {}
+- (void)applicationDidBecomeActive:(UIApplication*)application {}
+- (void)applicationWillTerminate:(UIApplication*)application {}
+- (void)applicationDidReceiveMemoryWarning:(UIApplication*)application {}
 @end
 
 @implementation UnityFramework
