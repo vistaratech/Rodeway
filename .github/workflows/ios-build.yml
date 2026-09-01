@@ -1,13 +1,14 @@
 name: iOS Build
-run-name: iOS Build ${{ inputs.build_id }}
+run-name: iOS Build ${{ inputs.build_id || 'rodeway-ios' }}
 
 on:
   workflow_dispatch:
     inputs:
       build_id:
         description: 'Unique build identifier'
-        required: true
+        required: false
         type: string
+        default: 'rodeway-ios'
       snapshot_ref:
         description: 'Ref holding the working-tree snapshot to build (empty builds this branch)'
         required: false
@@ -17,12 +18,12 @@ on:
         description: 'Path to iOS project (e.g., "ios" for React Native)'
         required: false
         type: string
-        default: '.'
+        default: 'ios'
       scheme:
         description: 'Xcode scheme to build (auto-detected if empty)'
         required: false
         type: string
-        default: ''
+        default: 'Runner'
       use_signing:
         description: 'Enable code signing (requires secrets to be configured)'
         required: false
@@ -32,7 +33,7 @@ on:
         description: 'Build configuration (Debug is faster, Release for production)'
         required: false
         type: string
-        default: 'Debug'
+        default: 'Release'
       flutter_version:
         description: 'Flutter version to use (e.g., 3.24.0). Empty means latest stable.'
         required: false
