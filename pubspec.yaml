@@ -25,6 +25,7 @@ dependencies:
   permission_handler: ^11.3.1
   flutter_reactive_ble: '>=5.3.1 <5.4.0'
   shared_preferences: ^2.3.4
+  flutter_dotenv: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -41,3 +42,5 @@ flutter:
   assets:
     # Add assets from the images directory to the application.
     - assets/images/
+    # Environment variables
+    - .env

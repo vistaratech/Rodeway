@@ -1,12 +1,15 @@
 import 'dart:ui';
 import 'package:cleadr/src/screens/maps_search.dart';
 import 'package:cleadr/src/screens/navigation.dart';
+import 'package:cleadr/src/services/ble_service.dart';
 import 'package:cleadr/src/services/location_service.dart';
 import 'package:cleadr/src/services/navigation_state_service.dart';
 import 'package:cleadr/src/services/services.dart';
 import 'package:cleadr/src/util/functions.dart';
+import 'package:cleadr/src/util/indicator_control_panel.dart';
 import 'package:cleadr/src/util/place.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 
@@ -20,6 +23,7 @@ class MapsScreen extends StatefulWidget {
 class _MapsScreenState extends State<MapsScreen> {
   bool _isLoading = true;
   bool _isRoutePreview = false;
+  bool _showIndicatorPanel = false;
   String? _initError;
 
   late LatLng _currentLocation;
@@ -183,6 +187,64 @@ class _MapsScreenState extends State<MapsScreen> {
                     )
                   : Container(),
 
+              // Indicator Quick Test FAB Button
+              Positioned(
+                right: 16,
+                bottom: _destinationLocation != null ? 275 : 84,
+                child: ValueListenableBuilder<String>(
+                  valueListenable: BleService.instance.activeIndicator,
+                  builder: (context, activeInd, _) {
+                    final isActive = activeInd != 'NONE';
+                    return ClipOval(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? const Color(0xFFF59E0B)
+                                : Colors.white.withValues(alpha: 0.88),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.6),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isActive
+                                    ? const Color(0xFFF59E0B).withValues(alpha: 0.45)
+                                    : Colors.black.withValues(alpha: 0.14),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(28),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(() {
+                                  _showIndicatorPanel = !_showIndicatorPanel;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Icon(
+                                  Icons.alt_route_rounded,
+                                  color: isActive ? Colors.black : const Color(0xFFD97706),
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
               // Bottom My Location Button
               Positioned(
                 right: 16,
@@ -240,6 +302,23 @@ class _MapsScreenState extends State<MapsScreen> {
                   ),
                 ),
               ),
+
+              // Floating Indicator Control Panel (when toggled on)
+              if (_showIndicatorPanel)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: _destinationLocation != null ? 215 : 90,
+                  child: SafeArea(
+                    child: IndicatorControlPanel(
+                      onClose: () {
+                        setState(() {
+                          _showIndicatorPanel = false;
+                        });
+                      },
+                    ),
+                  ),
+                ),
 
               _destinationLocation != null
 

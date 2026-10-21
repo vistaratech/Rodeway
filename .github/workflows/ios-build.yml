@@ -283,7 +283,7 @@ jobs:
           if [ -f "ios/UnityLibrary/UnityFrameworkStub.m" ]; then
             echo "Compiling UnityFramework stub library..."
             mkdir -p ios/UnityLibrary/UnityFramework.framework
-            xcrun clang -target arm64-apple-ios14.0 -dynamiclib -framework Foundation -framework UIKit -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -install_name @rpath/UnityFramework.framework/UnityFramework -Iios/UnityLibrary ios/UnityLibrary/UnityFrameworkStub.m -o ios/UnityLibrary/UnityFramework.framework/UnityFramework || true
+            xcrun clang -target arm64-apple-ios15.0 -dynamiclib -framework Foundation -framework UIKit -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -install_name @rpath/UnityFramework.framework/UnityFramework -Iios/UnityLibrary ios/UnityLibrary/UnityFrameworkStub.m -o ios/UnityLibrary/UnityFramework.framework/UnityFramework || true
           fi
 
       - name: Build IPA

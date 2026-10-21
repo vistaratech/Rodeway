@@ -49,6 +49,10 @@
 	<string>Rodeway requires location access for turn-by-turn navigation and map routing.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Rodeway requires background location to continue navigation when the app is minimized.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Rodeway requires background location to continue navigation when the app is minimized.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Rodeway uses motion data to enhance navigation accuracy and detect driving direction.</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Rodeway connects to your vehicle BLE smart indicator device.</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
@@ -58,6 +62,7 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>bluetooth-central</string>
 	</array>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>

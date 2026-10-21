@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:cleadr/src/screens/maps_navigation.dart';
 import 'package:cleadr/src/services/ble_service.dart';
 import 'package:cleadr/src/services/location_service.dart';
+import 'package:cleadr/src/util/indicator_control_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -298,6 +298,16 @@ class _SmartNavigationScreenState extends State<SmartNavigationScreen> {
               ),
             ),
           ),
+        ),
+      ),
+
+      // Bottom Quick Indicator Controller
+      const Positioned(
+        bottom: 24,
+        left: 16,
+        right: 16,
+        child: SafeArea(
+          child: IndicatorControlPanel(),
         ),
       ),
     ],

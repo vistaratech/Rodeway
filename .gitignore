@@ -4,6 +4,12 @@
 *.pyc
 *.swp
 .DS_Store
+
+# Environment variables (contains API keys & secrets)
+.env
+.env.local
+.env.*.local
+.mobai/
 .atom/
 .build/
 .buildlog/

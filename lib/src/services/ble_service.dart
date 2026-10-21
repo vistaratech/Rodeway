@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:cleadr/src/util/functions.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,11 +28,11 @@ class BleService {
   BleService._internal();
   static final BleService instance = BleService._internal();
 
-  // ── ESP32 BLE UUIDs ──
+  // ── ESP32 BLE UUIDs (loaded from .env) ──
   static final Uuid _serviceUuid =
-      Uuid.parse('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+      Uuid.parse(dotenv.env['BLE_SERVICE_UUID'] ?? '4fafc201-1fb5-459e-8fcc-c5c9c331914b');
   static final Uuid _characteristicUuid =
-      Uuid.parse('beb5483e-36e1-4688-b7f5-ea07361b26a8');
+      Uuid.parse(dotenv.env['BLE_CHARACTERISTIC_UUID'] ?? 'beb5483e-36e1-4688-b7f5-ea07361b26a8');
 
   // ── SharedPreferences key ──
   static const String _savedDeviceIdKey = 'ble_last_device_id';
@@ -45,6 +46,9 @@ class BleService {
 
   /// Notifies UI whenever a command is sent to ESP32 (e.g. 'RIGHT_ON', 'LEFT_ON', 'ALL_OFF')
   final ValueNotifier<String?> lastSentCommand = ValueNotifier(null);
+
+  /// Active indicator state for UI buttons: 'NONE', 'LEFT', 'RIGHT'
+  final ValueNotifier<String> activeIndicator = ValueNotifier('NONE');
 
   String? _connectedDeviceId;
   String? _connectedDeviceName;
@@ -312,6 +316,16 @@ class BleService {
             _stopReconnectTimer();
             _updateState(BleConnectionState.connected);
             debugLog('BleService: Connected to $deviceName ✓');
+
+            // Request low latency / high performance connection for instantaneous relay response
+            try {
+              _ble.requestConnectionPriority(
+                deviceId: deviceId,
+                priority: ConnectionPriority.highPerformance,
+              );
+            } catch (e) {
+              debugLog('BleService: Could not request high connection priority: $e');
+            }
             break;
 
           case DeviceConnectionState.disconnected:
@@ -374,39 +388,85 @@ class BleService {
   }
 
   // ─────────────────────────────────────────────
-  //  Sending Commands
+  //  Sending Commands & Manual Controls
   // ─────────────────────────────────────────────
 
+  void _updateActiveIndicatorFromCommand(String command) {
+    if (command.contains('LEFT')) {
+      activeIndicator.value = 'LEFT';
+    } else if (command.contains('RIGHT')) {
+      activeIndicator.value = 'RIGHT';
+    } else if (command.contains('OFF')) {
+      activeIndicator.value = 'NONE';
+    }
+  }
+
   /// Send a raw BLE command string to the ESP32.
-  Future<void> sendCommand(String command, {bool force = false}) async {
-    final timestamp = '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}:${DateTime.now().second.toString().padLeft(2, '0')}';
+  Future<bool> sendCommand(String command, {bool force = false}) async {
+    final timestamp =
+        '${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}:${DateTime.now().second.toString().padLeft(2, '0')}';
+
+    _updateActiveIndicatorFromCommand(command);
 
     if (_writeCharacteristic == null) {
       debugLog('BleService: Cannot send "$command" — not connected');
       _lastBleCommand = command;
       lastSentCommand.value = '$command ($timestamp)';
-      return;
+      return false;
     }
 
     // Duplicate prevention (unless force is true)
     if (!force && command == _lastBleCommand) {
-      return;
+      return true;
     }
 
     try {
       final bytes = utf8.encode(command);
-      await _ble.writeCharacteristicWithResponse(
-        _writeCharacteristic!,
-        value: bytes,
-      );
+      // Attempt fast write without response first; fallback to with-response if unsupported
+      try {
+        await _ble.writeCharacteristicWithoutResponse(
+          _writeCharacteristic!,
+          value: bytes,
+        );
+      } catch (_) {
+        await _ble.writeCharacteristicWithResponse(
+          _writeCharacteristic!,
+          value: bytes,
+        );
+      }
       _lastBleCommand = command;
       lastSentCommand.value = '$command ($timestamp)';
       debugLog('BleService: Sent "$command" ✓');
-      print('[BleService] Successfully transmitted signal to ESP32: $command');
+      debugLog('[BleService] Successfully transmitted signal to ESP32: $command');
+      return true;
     } catch (e) {
       debugLog('BleService: Failed to send "$command": $e');
       lastSentCommand.value = '$command ($timestamp)';
+      return false;
     }
+  }
+
+  /// Toggle Left Indicator: If active, turn OFF; else turn LEFT ON.
+  Future<void> toggleLeft() async {
+    if (activeIndicator.value == 'LEFT') {
+      await sendCommand('ALL_OFF', force: true);
+    } else {
+      await sendCommand('LEFT_ON', force: true);
+    }
+  }
+
+  /// Toggle Right Indicator: If active, turn OFF; else turn RIGHT ON.
+  Future<void> toggleRight() async {
+    if (activeIndicator.value == 'RIGHT') {
+      await sendCommand('ALL_OFF', force: true);
+    } else {
+      await sendCommand('RIGHT_ON', force: true);
+    }
+  }
+
+  /// Force turn off all relays.
+  Future<void> turnOffAll() async {
+    await sendCommand('ALL_OFF', force: true);
   }
 
   // ─────────────────────────────────────────────

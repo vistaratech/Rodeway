@@ -530,12 +530,12 @@ class _NavigationScreenState extends State<NavigationScreen>
               ),
 
               // Row 3: Interactive Indicator Testing Controls (Left, Right, Off)
-              ValueListenableBuilder<String?>(
-                valueListenable: BleService.instance.lastSentCommand,
-                builder: (context, cmd, _) {
-                  final isLeft = cmd?.contains('LEFT') ?? false;
-                  final isRight = cmd?.contains('RIGHT') ?? false;
-                  final isOff = cmd?.contains('OFF') ?? false;
+              ValueListenableBuilder<String>(
+                valueListenable: BleService.instance.activeIndicator,
+                builder: (context, activeInd, _) {
+                  final isLeft = activeInd == 'LEFT';
+                  final isRight = activeInd == 'RIGHT';
+                  final isOff = activeInd == 'NONE';
 
                   return Row(
                     children: [
@@ -544,13 +544,16 @@ class _NavigationScreenState extends State<NavigationScreen>
                           label: 'Left',
                           icon: Icons.turn_left,
                           isActive: isLeft,
-                          color: isLeft ? Colors.white : Colors.teal.shade800,
-                          bgColor: isLeft ? Colors.teal.shade600 : Colors.teal.withValues(alpha: 0.12),
-                          borderColor: isLeft ? Colors.teal.shade800 : Colors.teal.shade400,
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            BleService.instance.sendCommand('LEFT_ON', force: true);
-                            _showBleSnackbar('Testing Left Indicator (GPIO 2 / OUT 1&2)...', Colors.teal.shade700);
+                          color: isLeft ? Colors.white : const Color(0xFFD97706),
+                          bgColor: isLeft ? const Color(0xFFF59E0B) : const Color(0xFFFEF3C7),
+                          borderColor: isLeft ? const Color(0xFFB45309) : const Color(0xFFFCD34D),
+                          onTap: () async {
+                            HapticFeedback.heavyImpact();
+                            await BleService.instance.toggleLeft();
+                            _showBleSnackbar(
+                              isLeft ? 'Left Indicator OFF' : 'Left Indicator ON (GPIO 2 / Relay 1)',
+                              const Color(0xFFD97706),
+                            );
                           },
                         ),
                       ),
@@ -560,13 +563,16 @@ class _NavigationScreenState extends State<NavigationScreen>
                           label: 'Right',
                           icon: Icons.turn_right,
                           isActive: isRight,
-                          color: isRight ? Colors.white : Colors.amber.shade900,
-                          bgColor: isRight ? Colors.amber.shade600 : Colors.amber.withValues(alpha: 0.15),
-                          borderColor: isRight ? Colors.amber.shade800 : Colors.amber.shade500,
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            BleService.instance.sendCommand('RIGHT_ON', force: true);
-                            _showBleSnackbar('Testing Right Indicator (GPIO 3 / OUT 3&4)...', Colors.amber.shade800);
+                          color: isRight ? Colors.white : const Color(0xFFD97706),
+                          bgColor: isRight ? const Color(0xFFF59E0B) : const Color(0xFFFEF3C7),
+                          borderColor: isRight ? const Color(0xFFB45309) : const Color(0xFFFCD34D),
+                          onTap: () async {
+                            HapticFeedback.heavyImpact();
+                            await BleService.instance.toggleRight();
+                            _showBleSnackbar(
+                              isRight ? 'Right Indicator OFF' : 'Right Indicator ON (GPIO 3 / Relay 2)',
+                              const Color(0xFFD97706),
+                            );
                           },
                         ),
                       ),
@@ -577,12 +583,12 @@ class _NavigationScreenState extends State<NavigationScreen>
                           icon: Icons.power_settings_new,
                           isActive: isOff,
                           color: isOff ? Colors.white : Colors.grey.shade800,
-                          bgColor: isOff ? Colors.grey.shade700 : Colors.black.withValues(alpha: 0.05),
-                          borderColor: isOff ? Colors.black87 : Colors.black26,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            BleService.instance.sendCommand('ALL_OFF', force: true);
-                            _showBleSnackbar('Indicators OFF', Colors.grey.shade800);
+                          bgColor: isOff ? const Color(0xFF475569) : Colors.black.withValues(alpha: 0.06),
+                          borderColor: isOff ? const Color(0xFF1E293B) : Colors.black26,
+                          onTap: () async {
+                            HapticFeedback.mediumImpact();
+                            await BleService.instance.turnOffAll();
+                            _showBleSnackbar('All Relays OFF', const Color(0xFF475569));
                           },
                         ),
                       ),

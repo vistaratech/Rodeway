@@ -139,19 +139,23 @@ class CharacteristicCallbacks : public BLECharacteristicCallbacks {
     Serial.print("[CMD] Received: ");
     Serial.println(value);
 
-    if (value == "RIGHT_ON") {
+    if (value == "RIGHT_ON" || value == "RIGHT") {
       indicatorState = RIGHT_BLINK;
-      blinkOn = false;
-      lastBlinkTime = 0;
-      Serial.println("[CMD] → RIGHT indicator ON (Relay 2 blinking)");
+      blinkOn = true;
+      lastBlinkTime = millis();
+      digitalWrite(PIN_LEFT_RELAY,  RELAY_OFF);
+      digitalWrite(PIN_RIGHT_RELAY, RELAY_ON); // Instant turn ON Relay 2
+      Serial.println("[CMD] → RIGHT indicator ON (Relay 2 active)");
     }
-    else if (value == "LEFT_ON") {
+    else if (value == "LEFT_ON" || value == "LEFT") {
       indicatorState = LEFT_BLINK;
-      blinkOn = false;
-      lastBlinkTime = 0;
-      Serial.println("[CMD] → LEFT indicator ON (Relay 1 blinking)");
+      blinkOn = true;
+      lastBlinkTime = millis();
+      digitalWrite(PIN_RIGHT_RELAY, RELAY_OFF);
+      digitalWrite(PIN_LEFT_RELAY,  RELAY_ON); // Instant turn ON Relay 1
+      Serial.println("[CMD] → LEFT indicator ON (Relay 1 active)");
     }
-    else if (value == "ALL_OFF") {
+    else if (value == "ALL_OFF" || value == "OFF") {
       indicatorState = IDLE;
       allOff();
       Serial.println("[CMD] → ALL OFF (both relays OFF)");
@@ -200,6 +204,7 @@ void handleBlink() {
 // ──────────────────────────────────────────────────────────
 void setup() {
   Serial.begin(115200);
+  Serial.setTimeout(50);
   Serial.println("\n[Rodeway] ESP32 BLE Turn Indicator (Relay Module) starting...");
 
   // GPIO setup — only 2 pins needed for 2-channel relay
@@ -238,7 +243,8 @@ void setup() {
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);  // Advertise UUID for app to find
   pAdvertising->setScanResponse(true);
-  pAdvertising->setMinPreferred(0x06);
+  pAdvertising->setMinPreferred(0x06); // 7.5ms (Low latency BLE interval)
+  pAdvertising->setMaxPreferred(0x12); // 22.5ms
   BLEDevice::startAdvertising();
 
   Serial.println("[BLE] Advertising started — waiting for Rodeway app...");
@@ -260,15 +266,19 @@ void loop() {
 
     if (cmd == "RIGHT_ON" || cmd == "RIGHT") {
       indicatorState = RIGHT_BLINK;
-      blinkOn = false;
-      lastBlinkTime = 0;
-      Serial.println("[SERIAL] → RIGHT indicator ON (Relay 2 blinking)");
+      blinkOn = true;
+      lastBlinkTime = millis();
+      digitalWrite(PIN_LEFT_RELAY,  RELAY_OFF);
+      digitalWrite(PIN_RIGHT_RELAY, RELAY_ON);
+      Serial.println("[SERIAL] → RIGHT indicator ON (Relay 2 active)");
     }
     else if (cmd == "LEFT_ON" || cmd == "LEFT") {
       indicatorState = LEFT_BLINK;
-      blinkOn = false;
-      lastBlinkTime = 0;
-      Serial.println("[SERIAL] → LEFT indicator ON (Relay 1 blinking)");
+      blinkOn = true;
+      lastBlinkTime = millis();
+      digitalWrite(PIN_RIGHT_RELAY, RELAY_OFF);
+      digitalWrite(PIN_LEFT_RELAY,  RELAY_ON);
+      Serial.println("[SERIAL] → LEFT indicator ON (Relay 1 active)");
     }
     else if (cmd == "ALL_OFF" || cmd == "OFF") {
       indicatorState = IDLE;
