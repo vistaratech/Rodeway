@@ -1,0 +1,45 @@
+{
+  // ── Explorer Clean View & Organization ─────────────────────────
+  // Hide build artifacts, temporary cache, and non-mobile boilerplate
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+
+    // Generated Flutter build & cache folders
+    "**/.dart_tool": true,
+    "**/.mobai": true,
+    "**/.flutter-plugins": true,
+    "**/.flutter-plugins-dependencies": true,
+    "build/": true,
+    "dist/": true,
+
+    // Unused desktop & web platforms (mobile-only AR app)
+    "linux/": true,
+    "macos/": true,
+    "windows/": true,
+    "web/": true
+  },
+
+  // ── Smart File Nesting ─────────────────────────────────────────
+  // Group related config files under their parent to declutter the root
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "pubspec.yaml": "pubspec.lock, analysis_options.yaml, l10n.yaml",
+    ".env": ".env.example, .env.*",
+    "README.md": "LICENSE",
+    "builder.json": "builder.exe"
+  },
+
+  // ── Dart & Flutter Workspace Settings ──────────────────────────
+  "dart.lineLength": 100,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.selectionHighlight": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false
+  }
+}
