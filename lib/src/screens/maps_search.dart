@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:cleadr/src/services/services.dart';
 import 'package:cleadr/src/util/place.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
 

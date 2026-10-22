@@ -185,17 +185,29 @@ class _TermsAndConditionsScreenState extends State<TermsAndConditionsScreen> {
                               icon: Icons.location_on_outlined,
                               title: "2. Location & GPS Data",
                               content:
-                                  "Real-time location data is collected solely to calculate routes, render AR directional guidance, and detect place predictions. Your precise location is never sold or shared with unauthorized third parties.",
+                                  "Real-time location data is collected solely to calculate routes, render AR directional guidance, and detect place predictions. Your location is never sold, stored permanently on servers, or shared with unauthorized third parties.",
                             ),
                             _buildSection(
                               icon: Icons.camera_alt_outlined,
                               title: "3. Camera & AR Processing",
                               content:
-                                  "Camera permission is required to project live navigation indicators onto the real-world view. Live video frames are processed locally on device in real time and are not recorded or uploaded.",
+                                  "Camera permission is required to project live navigation indicators onto the real-world view. Live video frames are processed locally on device in real time and are never recorded, captured, or uploaded.",
+                            ),
+                            _buildSection(
+                              icon: Icons.bluetooth_connected_outlined,
+                              title: "4. Bluetooth & Smart Indicator",
+                              content:
+                                  "Bluetooth permission is used exclusively to discover and connect with your local vehicle ESP32 turn indicator module to automatically trigger turn signals. No personal data is transmitted over Bluetooth.",
+                            ),
+                            _buildSection(
+                              icon: Icons.delete_outline_rounded,
+                              title: "5. Data Privacy & Deletion",
+                              content:
+                                  "Rodeway does not require account creation and stores no personal user data on external servers. All preferences are stored locally and can be permanently deleted at any time by clearing app data in your device settings or uninstalling the app.",
                             ),
                             _buildSection(
                               icon: Icons.lock_outline,
-                              title: "4. User Agreement",
+                              title: "6. User Agreement",
                               content:
                                   "By using Rodeway, you accept that navigation assistance is provided 'as-is'. You remain solely responsible for safe driving decisions and compliance with local transportation rules.",
                             ),

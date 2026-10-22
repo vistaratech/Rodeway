@@ -1,4 +1,3 @@
-import 'package:cleadr/src/screens/maps_navigation.dart';
 import 'package:cleadr/src/services/drone_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
@@ -95,9 +94,7 @@ class _DroneNavigationScreenState extends State<DroneNavigationScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
-                      children: _drone.waypoints.asMap().entries.map((entry) {
-                        final idx = entry.key;
-                        final wp = entry.value;
+                      children: _drone.waypoints.map((wp) {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(

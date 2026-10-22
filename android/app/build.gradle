@@ -14,6 +14,15 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+// Load release keystore from key.properties (gitignored)
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace = "com.fyp.cleadr"
     compileSdk = flutter.compileSdkVersion
@@ -46,18 +55,31 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
+
         // Inject Google Maps API Key from local.properties into AndroidManifest.xml
         manifestPlaceholders += [
             GOOGLE_MAPS_API_KEY: localProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
         ]
     }
 
+    signingConfigs {
+        release {
+            keyAlias = keystoreProperties["keyAlias"]
+            keyPassword = keystoreProperties["keyPassword"]
+            storeFile = keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
+            storePassword = keystoreProperties["storePassword"]
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = (keystorePropertiesFile.exists() && keystoreProperties["storeFile"]) ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             shrinkResources true
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
         debug {
