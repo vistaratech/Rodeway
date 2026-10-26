@@ -127,6 +127,24 @@ jobs:
               fi
             done
 
+      - name: Materialize missing environment file
+        env:
+          ENV_FILE_SECRET: ${{ secrets.ENV_FILE || secrets.DOTENV || '' }}
+        run: |
+          set -e
+          if [ ! -f ".env" ]; then
+            if [ -n "$ENV_FILE_SECRET" ]; then
+              echo "$ENV_FILE_SECRET" > .env
+              echo "Materialized .env from GitHub secrets."
+            elif [ -f ".env.example" ]; then
+              cp .env.example .env
+              echo "::warning::.env was missing (gitignored); copied .env.example over it for asset bundling."
+            else
+              touch .env
+              echo "::warning::Created empty .env file for asset bundling."
+            fi
+          fi
+
       - name: Generate Xcode project (XcodeGen)
         env:
           IOS_PATH: ${{ inputs.ios_path }}
