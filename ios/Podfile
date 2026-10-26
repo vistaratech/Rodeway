@@ -45,4 +45,14 @@ post_install do |installer|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
   end
+
+  # Embed UnityFramework stub/library into Runner.app bundle
+  frameworks_script = File.join(installer.sandbox.target_support_files_dir('Pods-Runner'), 'Pods-Runner-frameworks.sh')
+  if File.exist?(frameworks_script)
+    unity_entry = %Q(\n# Embed UnityFramework\nif [ -d "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework" ]; then\n  install_framework "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework"\nfi\n)
+    content = File.read(frameworks_script)
+    unless content.include?("UnityLibrary/UnityFramework.framework")
+      File.open(frameworks_script, "a") { |f| f.write(unity_entry) }
+    end
+  end
 end

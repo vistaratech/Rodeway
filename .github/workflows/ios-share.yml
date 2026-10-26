@@ -234,6 +234,15 @@ jobs:
         if: steps.detect.outputs.type == 'kmp'
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Prepare UnityFramework if needed
+        run: |
+          if [ -f "ios/UnityLibrary/UnityFrameworkStub.m" ]; then
+            echo "Compiling UnityFramework stub library for simulator..."
+            mkdir -p ios/UnityLibrary/UnityFramework.framework
+            xcrun clang -target arm64-apple-ios15.0-simulator -dynamiclib -framework Foundation -framework UIKit -isysroot $(xcrun --sdk iphonesimulator --show-sdk-path) -install_name @rpath/UnityFramework.framework/UnityFramework -Iios/UnityLibrary ios/UnityLibrary/UnityFrameworkStub.m -o ios/UnityLibrary/UnityFramework.framework/UnityFramework || true
+            codesign --force --sign - --timestamp=none ios/UnityLibrary/UnityFramework.framework || true
+          fi
+
       - name: Build for the simulator
         id: build
         env:
@@ -248,6 +257,13 @@ jobs:
             # place, so there is nothing to detect here.
             flutter build ios --simulator --debug
             APP_PATH=$(find build/ios/iphonesimulator -maxdepth 1 -name '*.app' -print -quit)
+            if [ -d "ios/UnityLibrary/UnityFramework.framework" ]; then
+              for app in $(find build/ios/iphonesimulator -maxdepth 1 -name '*.app'); do
+                mkdir -p "$app/Frameworks"
+                cp -R "ios/UnityLibrary/UnityFramework.framework" "$app/Frameworks/"
+                codesign --force --sign - --timestamp=none "$app/Frameworks/UnityFramework.framework" || true
+              done
+            fi
           else
             cd "$IOS_PATH"
 

@@ -29,10 +29,19 @@ class BleService {
   static final BleService instance = BleService._internal();
 
   // ── ESP32 BLE UUIDs (loaded from .env) ──
-  static final Uuid _serviceUuid =
-      Uuid.parse(dotenv.env['BLE_SERVICE_UUID'] ?? '4fafc201-1fb5-459e-8fcc-c5c9c331914b');
-  static final Uuid _characteristicUuid =
-      Uuid.parse(dotenv.env['BLE_CHARACTERISTIC_UUID'] ?? 'beb5483e-36e1-4688-b7f5-ea07361b26a8');
+  static final Uuid _serviceUuid = _parseUuid(
+      dotenv.env['BLE_SERVICE_UUID'], '4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+  static final Uuid _characteristicUuid = _parseUuid(
+      dotenv.env['BLE_CHARACTERISTIC_UUID'], 'beb5483e-36e1-4688-b7f5-ea07361b26a8');
+
+  static Uuid _parseUuid(String? raw, String fallback) {
+    if (raw != null && raw.trim().isNotEmpty) {
+      try {
+        return Uuid.parse(raw.trim());
+      } catch (_) {}
+    }
+    return Uuid.parse(fallback);
+  }
 
   // ── SharedPreferences key ──
   static const String _savedDeviceIdKey = 'ble_last_device_id';

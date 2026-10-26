@@ -11,12 +11,18 @@
 
 @implementation UnityFramework
 static UnityFramework* _instance = nil;
+static UnityAppController* _appController = nil;
+
 + (UnityFramework*)getInstance {
     if (!_instance) { _instance = [[UnityFramework alloc] init]; }
     return _instance;
 }
 - (void)setDataBundleId:(const char*)t {}
-- (void)runEmbeddedWithArgc:(int)argc argv:(char**)argv appLaunchOpts:(NSDictionary*)appLaunchOpts {}
+- (void)runEmbeddedWithArgc:(int)argc argv:(char**)argv appLaunchOpts:(NSDictionary*)appLaunchOpts {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"UnityReady" object:nil];
+    });
+}
 - (void)showUnityWindow {}
 - (void)pause:(BOOL)pause {}
 - (void)unloadApplication {}
@@ -24,5 +30,11 @@ static UnityFramework* _instance = nil;
 - (void)sendMessageToGOWithName:(const char*)goName functionName:(const char*)name message:(const char*)msg {}
 - (void)registerFrameworkListener:(id<UnityFrameworkListener>)obj {}
 - (void)unregisterFrameworkListener:(id<UnityFrameworkListener>)obj {}
-- (UnityAppController*)appController { return [[UnityAppController alloc] init]; }
+- (UnityAppController*)appController {
+    if (!_appController) {
+        _appController = [[UnityAppController alloc] init];
+        _appController.rootView = [[UIView alloc] initWithFrame:CGRectZero];
+    }
+    return _appController;
+}
 @end

@@ -302,6 +302,7 @@ jobs:
             echo "Compiling UnityFramework stub library..."
             mkdir -p ios/UnityLibrary/UnityFramework.framework
             xcrun clang -target arm64-apple-ios15.0 -dynamiclib -framework Foundation -framework UIKit -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -install_name @rpath/UnityFramework.framework/UnityFramework -Iios/UnityLibrary ios/UnityLibrary/UnityFrameworkStub.m -o ios/UnityLibrary/UnityFramework.framework/UnityFramework || true
+            codesign --force --sign - --timestamp=none ios/UnityLibrary/UnityFramework.framework || true
           fi
 
       - name: Build IPA
@@ -326,6 +327,18 @@ jobs:
             else
               flutter build ios --release --no-codesign -v
             fi
+
+            # Embed UnityFramework into built Runner.app bundles
+            if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" ]; then
+              echo "Embedding UnityFramework into Runner.app bundles..."
+              find "${GITHUB_WORKSPACE}/build" -name "Runner.app" -type d | while read -r app; do
+                echo "Copying UnityFramework.framework to $app/Frameworks/"
+                mkdir -p "$app/Frameworks"
+                cp -R "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" "$app/Frameworks/"
+                codesign --force --sign - --timestamp=none "$app/Frameworks/UnityFramework.framework" || true
+              done
+            fi
+
             cd "$IOS_PATH"
 
             if [ "$USE_SIGNING" = "true" ]; then
@@ -355,6 +368,17 @@ jobs:
 
               echo "Running: $ARCHIVE_CMD"
               eval $ARCHIVE_CMD
+
+              # Ensure UnityFramework is embedded into xcarchive
+              if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" ]; then
+                ARCHIVE_APP=$(find "$GITHUB_WORKSPACE/build/App.xcarchive/Products/Applications" -name "*.app" -type d | head -1)
+                if [ -n "$ARCHIVE_APP" ]; then
+                  echo "Embedding UnityFramework into xcarchive: $ARCHIVE_APP/Frameworks"
+                  mkdir -p "$ARCHIVE_APP/Frameworks"
+                  cp -R "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" "$ARCHIVE_APP/Frameworks/"
+                  codesign --force --sign - --timestamp=none "$ARCHIVE_APP/Frameworks/UnityFramework.framework" || true
+                fi
+              fi
             fi
           elif [ "$PROJECT_TYPE" = "reactnative" ] || [ "$PROJECT_TYPE" = "expo" ] || [ "$PROJECT_TYPE" = "kmp" ]; then
             # Use xcodebuild directly for React Native/Expo and Kotlin Multiplatform.
@@ -500,13 +524,33 @@ jobs:
               exit 1
             fi
             echo "Found app at: $APP_PATH"
+
+            # Ensure UnityFramework is embedded into the app bundle
+            if [ -d "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" ]; then
+              echo "Ensuring UnityFramework is in $APP_PATH/Frameworks..."
+              mkdir -p "$APP_PATH/Frameworks"
+              cp -R "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" "$APP_PATH/Frameworks/"
+              codesign --force --sign - --timestamp=none "$APP_PATH/Frameworks/UnityFramework.framework" || true
+            fi
+
             cd "$GITHUB_WORKSPACE"
             mkdir -p build/Payload
             cp -R "$APP_PATH" build/Payload/
+
+            PAYLOAD_APP=$(find "${GITHUB_WORKSPACE}/build/Payload" -name "*.app" -type d | head -1)
+            if [ -n "$PAYLOAD_APP" ] && [ -d "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" ]; then
+              echo "Ensuring UnityFramework is in $PAYLOAD_APP/Frameworks..."
+              mkdir -p "$PAYLOAD_APP/Frameworks"
+              cp -R "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" "$PAYLOAD_APP/Frameworks/"
+            fi
+
             cd build
             zip -rq "$BUILD_ID.ipa" Payload
             rm -rf Payload
             echo "Created unsigned IPA: build/$BUILD_ID.ipa"
+
+            echo "Verifying UnityFramework inside IPA:"
+            unzip -l "$BUILD_ID.ipa" | grep -i "UnityFramework" || echo "::warning::UnityFramework not found in IPA archive"
           fi
 
       - name: Upload IPA artifact
