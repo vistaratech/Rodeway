@@ -57,10 +57,10 @@ post_install do |installer|
     end
   end
 
-  # Embed UnityFramework stub/library into Runner.app bundle
+  # Embed UnityFramework and native plugin frameworks into Runner.app bundle
   frameworks_script = File.join(installer.sandbox.target_support_files_dir('Pods-Runner'), 'Pods-Runner-frameworks.sh')
   if File.exist?(frameworks_script)
-    unity_entry = %Q(\n# Embed UnityFramework\nif [ -d "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework" ]; then\n  install_framework "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework"\nfi\n)
+    unity_entry = %Q(\n# Embed UnityFramework & plugin frameworks\nif [ -d "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework" ]; then\n  install_framework "${PODS_ROOT}/../UnityLibrary/UnityFramework.framework"\nfi\nfind "${PODS_ROOT}/../UnityLibrary/Frameworks" -name "*.framework" -type d 2>/dev/null | while read -r fw; do\n  install_framework "$fw"\ndone\n)
     content = File.read(frameworks_script)
     unless content.include?("UnityLibrary/UnityFramework.framework")
       File.open(frameworks_script, "a") { |f| f.write(unity_entry) }
