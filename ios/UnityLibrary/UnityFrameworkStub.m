@@ -33,7 +33,7 @@ static UnityAppController* _appController = nil;
 - (UnityAppController*)appController {
     if (!_appController) {
         _appController = [[UnityAppController alloc] init];
-        _appController.rootView = [[UIView alloc] initWithFrame:CGRectZero];
+        _appController.rootView = [[UIView alloc] init];
     }
     return _appController;
 }
