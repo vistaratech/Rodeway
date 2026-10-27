@@ -1,0 +1,130 @@
+﻿#include "pch-c.h"
+#ifndef _MSC_VER
+# include <alloca.h>
+#else
+# include <malloc.h>
+#endif
+
+
+#include "codegen/il2cpp-codegen-metadata.h"
+
+
+extern const RuntimeMethod* ErrorReporter_OnErrorReporter_mA1DFDB2BEDA27B6B7DDF166AE7A869F794224CD1_RuntimeMethod_var;
+
+
+
+extern void ErrorReporter_ConfigureReporter_m1A6EEB9748D9C5BD59856E178A84F7B394D8F58B (void);
+extern void ErrorReporter_OnErrorReporter_mA1DFDB2BEDA27B6B7DDF166AE7A869F794224CD1 (void);
+extern void ErrorReporter_TfLiteInterpreterOptionsSetErrorReporter_m0C4CD0CEF5CD42F760379843F93ED44531826838 (void);
+extern void ErrorReporterDelegate__ctor_m0EAAC197B1A3B2F9526A5E821A998A0787F67F97 (void);
+extern void ErrorReporterDelegate_Invoke_m0685217F96092B6286179337DC01A496D85B5B11 (void);
+extern void Interpreter__ctor_m5BC403A44C914F12701A68783D68A29A0F3A3D35 (void);
+extern void Interpreter_Dispose_m12271FE79DE113682106328343CF2793E1B79F7B (void);
+extern void Interpreter_Invoke_m5DC07AAD7948548E5ED741C2E35899CE419567C7 (void);
+extern void Interpreter_SetInputTensorData_m2DCCB5E815C99213F88A7082FFA825C02B73B1A9 (void);
+extern void Interpreter_ResizeInputTensor_m6960E53BBFCB1B9582AEFB511CBFFB6E6A8E6391 (void);
+extern void Interpreter_AllocateTensors_m600E300A4C080D5732D156DA2BF47B48491A639C (void);
+extern void Interpreter_GetOutputTensorData_mBB18EB83BA0092CE73AC13242AB51F79C747FBEA (void);
+extern void Interpreter_ThrowIfError_m4F84EE55D3FD540DE37FDD2EC4FDE09BBAF465DC (void);
+extern void Interpreter_TfLiteModelCreate_mA5D88D4A74547553A74D5D681ED736DA786BFB08 (void);
+extern void Interpreter_TfLiteModelDelete_m5F08BD953B10012E09A580F8A4D708AC6464791D (void);
+extern void Interpreter_TfLiteInterpreterCreate_m0D7049F322008645A1AABFB8590B80B24DDC407B (void);
+extern void Interpreter_TfLiteInterpreterDelete_m0D07FD41965427A0FF42B7E291515B2B0C0A87DE (void);
+extern void Interpreter_TfLiteInterpreterGetInputTensor_m5B49743083077F09FB9551A787FA8EBBF794C9F3 (void);
+extern void Interpreter_TfLiteInterpreterResizeInputTensor_mA77A63F222FD034DDF563C2299E1711A64753849 (void);
+extern void Interpreter_TfLiteInterpreterAllocateTensors_mA4247D53F9D1D6CC6218F7C0F92613793683400F (void);
+extern void Interpreter_TfLiteInterpreterInvoke_m46EC0EDA0F74F0CD27083E8D194CFAFC3637FD42 (void);
+extern void Interpreter_TfLiteInterpreterGetOutputTensor_m7F91C21F26994C123C9F005D7EC6B80B69186FE9 (void);
+extern void Interpreter_TfLiteTensorCopyFromBuffer_mAD26B3AF09E998D078E932AFBFDC4C70E1B5335B (void);
+extern void Interpreter_TfLiteTensorCopyToBuffer_mE800F2D739229269FE0CC7B3437A593B570AA608 (void);
+extern void InterpreterOptions__ctor_mEEC2148897A34DBBC2445A8C70B7F42E8579AA75 (void);
+extern void InterpreterOptions_Dispose_mA62A6677F5A57F3E9F4FEB2C2E3EECA581241FC9 (void);
+extern void InterpreterOptions_TfLiteInterpreterOptionsCreate_mD2CAA158F9F1BE9B42F8199E9D882B5E51508E14 (void);
+extern void InterpreterOptions_TfLiteInterpreterOptionsDelete_m24A5BD39697518ABF5157557D920771B9B078004 (void);
+static Il2CppMethodPointer s_methodPointers[28] = 
+{
+	ErrorReporter_ConfigureReporter_m1A6EEB9748D9C5BD59856E178A84F7B394D8F58B,
+	ErrorReporter_OnErrorReporter_mA1DFDB2BEDA27B6B7DDF166AE7A869F794224CD1,
+	ErrorReporter_TfLiteInterpreterOptionsSetErrorReporter_m0C4CD0CEF5CD42F760379843F93ED44531826838,
+	ErrorReporterDelegate__ctor_m0EAAC197B1A3B2F9526A5E821A998A0787F67F97,
+	ErrorReporterDelegate_Invoke_m0685217F96092B6286179337DC01A496D85B5B11,
+	Interpreter__ctor_m5BC403A44C914F12701A68783D68A29A0F3A3D35,
+	Interpreter_Dispose_m12271FE79DE113682106328343CF2793E1B79F7B,
+	Interpreter_Invoke_m5DC07AAD7948548E5ED741C2E35899CE419567C7,
+	Interpreter_SetInputTensorData_m2DCCB5E815C99213F88A7082FFA825C02B73B1A9,
+	Interpreter_ResizeInputTensor_m6960E53BBFCB1B9582AEFB511CBFFB6E6A8E6391,
+	Interpreter_AllocateTensors_m600E300A4C080D5732D156DA2BF47B48491A639C,
+	Interpreter_GetOutputTensorData_mBB18EB83BA0092CE73AC13242AB51F79C747FBEA,
+	Interpreter_ThrowIfError_m4F84EE55D3FD540DE37FDD2EC4FDE09BBAF465DC,
+	Interpreter_TfLiteModelCreate_mA5D88D4A74547553A74D5D681ED736DA786BFB08,
+	Interpreter_TfLiteModelDelete_m5F08BD953B10012E09A580F8A4D708AC6464791D,
+	Interpreter_TfLiteInterpreterCreate_m0D7049F322008645A1AABFB8590B80B24DDC407B,
+	Interpreter_TfLiteInterpreterDelete_m0D07FD41965427A0FF42B7E291515B2B0C0A87DE,
+	Interpreter_TfLiteInterpreterGetInputTensor_m5B49743083077F09FB9551A787FA8EBBF794C9F3,
+	Interpreter_TfLiteInterpreterResizeInputTensor_mA77A63F222FD034DDF563C2299E1711A64753849,
+	Interpreter_TfLiteInterpreterAllocateTensors_mA4247D53F9D1D6CC6218F7C0F92613793683400F,
+	Interpreter_TfLiteInterpreterInvoke_m46EC0EDA0F74F0CD27083E8D194CFAFC3637FD42,
+	Interpreter_TfLiteInterpreterGetOutputTensor_m7F91C21F26994C123C9F005D7EC6B80B69186FE9,
+	Interpreter_TfLiteTensorCopyFromBuffer_mAD26B3AF09E998D078E932AFBFDC4C70E1B5335B,
+	Interpreter_TfLiteTensorCopyToBuffer_mE800F2D739229269FE0CC7B3437A593B570AA608,
+	InterpreterOptions__ctor_mEEC2148897A34DBBC2445A8C70B7F42E8579AA75,
+	InterpreterOptions_Dispose_mA62A6677F5A57F3E9F4FEB2C2E3EECA581241FC9,
+	InterpreterOptions_TfLiteInterpreterOptionsCreate_mD2CAA158F9F1BE9B42F8199E9D882B5E51508E14,
+	InterpreterOptions_TfLiteInterpreterOptionsDelete_m24A5BD39697518ABF5157557D920771B9B078004,
+};
+static const int32_t s_InvokerIndices[28] = 
+{
+	15435,
+	13000,
+	13000,
+	4380,
+	2202,
+	4386,
+	10204,
+	10204,
+	4042,
+	4042,
+	10204,
+	4042,
+	15433,
+	13795,
+	15435,
+	13796,
+	15435,
+	13795,
+	11675,
+	14946,
+	14946,
+	13795,
+	12475,
+	12475,
+	10204,
+	10204,
+	15662,
+	15435,
+};
+static const Il2CppTokenIndexMethodTuple s_reversePInvokeIndices[1] = 
+{
+	{ 0x06000002, 9,  (void**)&ErrorReporter_OnErrorReporter_mA1DFDB2BEDA27B6B7DDF166AE7A869F794224CD1_RuntimeMethod_var, 0 },
+};
+IL2CPP_EXTERN_C const Il2CppCodeGenModule g_TensorFlowLite_CodeGenModule;
+const Il2CppCodeGenModule g_TensorFlowLite_CodeGenModule = 
+{
+	"TensorFlowLite.dll",
+	28,
+	s_methodPointers,
+	0,
+	NULL,
+	s_InvokerIndices,
+	1,
+	s_reversePInvokeIndices,
+	0,
+	NULL,
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};

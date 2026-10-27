@@ -53,6 +53,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          lfs: true
 
       # The dispatch always runs the workflow from the default branch, so the
       # sources come from a snapshot ref pushed by the CLI instead.
@@ -64,6 +66,7 @@ jobs:
           set -e
           git fetch --depth=1 origin "+$SNAPSHOT_REF:refs/heads/snapshot"
           git checkout --force snapshot
+          git lfs pull
           echo "Building $(git rev-parse --short HEAD)"
 
       - name: Setup Xcode
@@ -298,7 +301,28 @@ jobs:
 
       - name: Prepare UnityFramework if needed
         run: |
-          if [ -f "ios/UnityLibrary/UnityFrameworkStub.m" ]; then
+          if [ -d "ios/UnityLibrary/Unity-iPhone.xcodeproj" ]; then
+            echo "Building real UnityFramework from exported Unity-iPhone.xcodeproj..."
+            xcodebuild -project ios/UnityLibrary/Unity-iPhone.xcodeproj \
+              -scheme UnityFramework \
+              -configuration Release \
+              -sdk iphoneos \
+              -destination 'generic/platform=iOS' \
+              BUILD_DIR="${GITHUB_WORKSPACE}/ios/UnityLibrary/build" \
+              ENABLE_BITCODE=NO \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              build
+            
+            BUILT_FRAMEWORK=$(find "${GITHUB_WORKSPACE}/ios/UnityLibrary/build" -name "UnityFramework.framework" -type d | head -n 1)
+            if [ -n "$BUILT_FRAMEWORK" ]; then
+              echo "Found built framework at $BUILT_FRAMEWORK. Copying to ios/UnityLibrary..."
+              mkdir -p ios/UnityLibrary/UnityFramework.framework
+              cp -R "$BUILT_FRAMEWORK/"* ios/UnityLibrary/UnityFramework.framework/
+            fi
+            codesign --force --sign - --timestamp=none ios/UnityLibrary/UnityFramework.framework || true
+          elif [ -f "ios/UnityLibrary/UnityFrameworkStub.m" ]; then
             echo "Compiling UnityFramework stub library..."
             mkdir -p ios/UnityLibrary/UnityFramework.framework
             xcrun clang -target arm64-apple-ios15.0 -dynamiclib -framework Foundation -framework UIKit -framework CoreGraphics -framework AVFoundation -isysroot $(xcrun --sdk iphoneos --show-sdk-path) -install_name @rpath/UnityFramework.framework/UnityFramework -Iios/UnityLibrary ios/UnityLibrary/UnityFrameworkStub.m -o ios/UnityLibrary/UnityFramework.framework/UnityFramework

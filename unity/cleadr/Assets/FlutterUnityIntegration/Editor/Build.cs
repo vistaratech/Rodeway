@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -428,6 +428,9 @@ body { padding: 0; margin: 0; overflow: hidden; }
                 PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.iOS, isReleaseBuild ? Il2CppCompilerConfiguration.Release : Il2CppCompilerConfiguration.Debug);
                 EditorUserBuildSettings.il2CppCodeGeneration = isReleaseBuild ? Il2CppCodeGeneration.OptimizeSpeed : Il2CppCodeGeneration.OptimizeSize;
             #endif
+
+            PlayerSettings.iOS.locationUsageDescription = "Rodeway requires location access for turn-by-turn navigation and map routing.";
+            PlayerSettings.iOS.cameraUsageDescription = "Rodeway requires camera access for AR navigation mode.";
 
             var playerOptions = new BuildPlayerOptions
             {

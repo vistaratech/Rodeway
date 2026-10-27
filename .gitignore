@@ -60,6 +60,7 @@ app.*.map.json
 /unity/cleadr/Library/
 /unity/cleadr/Logs/
 /unity/cleadr/Temp/
+/unity/cleadr/UserSettings/
 macos/Flutter/GeneratedPluginRegistrant.swift
 linux/flutter/generated_plugins.cmake
 linux/flutter/generated_plugin_registrant.h
