@@ -369,20 +369,14 @@ jobs:
               flutter build ios --release --no-codesign -v
             fi
 
-            # Embed UnityFramework and plugin frameworks into built Runner.app bundles
+            # Embed UnityFramework into built Runner.app bundles
             if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" ]; then
-              echo "Embedding UnityFramework and plugin frameworks into Runner.app bundles..."
+              echo "Embedding UnityFramework into Runner.app bundles..."
               find "${GITHUB_WORKSPACE}/build" -name "Runner.app" -type d | while read -r app; do
                 mkdir -p "$app/Frameworks"
                 echo "Copying UnityFramework.framework to $app/Frameworks/"
                 cp -R "$GITHUB_WORKSPACE/ios/UnityLibrary/UnityFramework.framework" "$app/Frameworks/"
                 codesign --force --sign - --timestamp=none "$app/Frameworks/UnityFramework.framework" || true
-
-                find "$GITHUB_WORKSPACE/ios/UnityLibrary/Frameworks" -name "*.framework" -type d 2>/dev/null | while read -r fw; do
-                  echo "Copying $(basename "$fw") to $app/Frameworks/"
-                  cp -R "$fw" "$app/Frameworks/"
-                  codesign --force --sign - --timestamp=none "$app/Frameworks/$(basename "$fw")" || true
-                done
 
                 if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/Data" ] && [ ! -d "$app/Data" ]; then
                   echo "Copying Data to $app/Data/"
@@ -577,18 +571,12 @@ jobs:
             fi
             echo "Found app at: $APP_PATH"
 
-            # Ensure UnityFramework and plugin frameworks are in the app bundle
+            # Ensure UnityFramework is in the app bundle
             if [ -d "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" ]; then
-              echo "Ensuring UnityFramework and plugin frameworks are in $APP_PATH/Frameworks..."
+              echo "Ensuring UnityFramework is in $APP_PATH/Frameworks..."
               mkdir -p "$APP_PATH/Frameworks"
               cp -R "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" "$APP_PATH/Frameworks/"
               codesign --force --sign - --timestamp=none "$APP_PATH/Frameworks/UnityFramework.framework" || true
-
-              find "${GITHUB_WORKSPACE}/ios/UnityLibrary/Frameworks" -name "*.framework" -type d 2>/dev/null | while read -r fw; do
-                echo "Copying $(basename "$fw") to $APP_PATH/Frameworks/"
-                cp -R "$fw" "$APP_PATH/Frameworks/"
-                codesign --force --sign - --timestamp=none "$APP_PATH/Frameworks/$(basename "$fw")" || true
-              done
 
               if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/Data" ] && [ ! -d "$APP_PATH/Data" ]; then
                 cp -R "$GITHUB_WORKSPACE/ios/UnityLibrary/Data" "$APP_PATH/Data"
@@ -601,14 +589,10 @@ jobs:
 
             PAYLOAD_APP=$(find "${GITHUB_WORKSPACE}/build/Payload" -name "*.app" -type d | head -1)
             if [ -n "$PAYLOAD_APP" ] && [ -d "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" ]; then
-              echo "Ensuring UnityFramework and plugin frameworks are in $PAYLOAD_APP/Frameworks..."
+              echo "Ensuring UnityFramework is in $PAYLOAD_APP/Frameworks..."
               mkdir -p "$PAYLOAD_APP/Frameworks"
               cp -R "${GITHUB_WORKSPACE}/ios/UnityLibrary/UnityFramework.framework" "$PAYLOAD_APP/Frameworks/"
               codesign --force --sign - --timestamp=none "$PAYLOAD_APP/Frameworks/UnityFramework.framework" || true
-              find "${GITHUB_WORKSPACE}/ios/UnityLibrary/Frameworks" -name "*.framework" -type d 2>/dev/null | while read -r fw; do
-                cp -R "$fw" "$PAYLOAD_APP/Frameworks/"
-                codesign --force --sign - --timestamp=none "$PAYLOAD_APP/Frameworks/$(basename "$fw")" || true
-              done
               if [ -d "$GITHUB_WORKSPACE/ios/UnityLibrary/Data" ] && [ ! -d "$PAYLOAD_APP/Data" ]; then
                 cp -R "$GITHUB_WORKSPACE/ios/UnityLibrary/Data" "$PAYLOAD_APP/Data"
               fi
