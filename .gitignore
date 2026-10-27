@@ -37,7 +37,8 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-build/
+/build/
+!ios/UnityLibrary/Il2CppOutputProject/IL2CPP/build/**
 ios/Pods/
 ios/.symlinks/
 ios/Flutter/Flutter.framework/
