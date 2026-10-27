@@ -302,6 +302,13 @@ jobs:
       - name: Prepare UnityFramework if needed
         run: |
           if [ -d "ios/UnityLibrary/Unity-iPhone.xcodeproj" ]; then
+            echo "Listing schemes and targets in Unity-iPhone.xcodeproj:"
+            xcodebuild -project ios/UnityLibrary/Unity-iPhone.xcodeproj -list || true
+
+            echo "Ensuring execution permissions for tools..."
+            chmod -R +x ios/UnityLibrary/Il2CppOutputProject/IL2CPP 2>/dev/null || true
+            chmod +x ios/UnityLibrary/process_symbols.sh 2>/dev/null || true
+
             echo "Building real UnityFramework from exported Unity-iPhone.xcodeproj..."
             xcodebuild -project ios/UnityLibrary/Unity-iPhone.xcodeproj \
               -scheme UnityFramework \
@@ -309,6 +316,8 @@ jobs:
               -sdk iphoneos \
               -destination 'generic/platform=iOS' \
               BUILD_DIR="${GITHUB_WORKSPACE}/ios/UnityLibrary/build" \
+              ARCHS="arm64" \
+              ONLY_ACTIVE_ARCH=NO \
               ENABLE_BITCODE=NO \
               CODE_SIGNING_ALLOWED=NO \
               CODE_SIGNING_REQUIRED=NO \
@@ -320,6 +329,10 @@ jobs:
               echo "Found built framework at $BUILT_FRAMEWORK. Copying to ios/UnityLibrary..."
               mkdir -p ios/UnityLibrary/UnityFramework.framework
               cp -R "$BUILT_FRAMEWORK/"* ios/UnityLibrary/UnityFramework.framework/
+            else
+              echo "::error::UnityFramework.framework was not found in build directory!"
+              find "${GITHUB_WORKSPACE}/ios/UnityLibrary/build" -maxdepth 3 || true
+              exit 1
             fi
             codesign --force --sign - --timestamp=none ios/UnityLibrary/UnityFramework.framework || true
           elif [ -f "ios/UnityLibrary/UnityFrameworkStub.m" ]; then
