@@ -43,6 +43,17 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       config.build_settings['ENABLE_BITCODE'] = 'NO'
+
+      # Enable iOS permissions in permission_handler
+      defs = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS']
+      perm_flags = ['PERMISSION_CAMERA=1', 'PERMISSION_LOCATION=1', 'PERMISSION_BLUETOOTH=1', 'PERMISSION_SENSORS=1']
+      if defs.nil?
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = ['$(inherited)'] + perm_flags
+      elsif defs.is_a?(Array)
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs | perm_flags
+      elsif defs.is_a?(String)
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = [defs] + perm_flags
+      end
     end
   end
 

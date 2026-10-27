@@ -206,19 +206,22 @@ class Services {
 
     try {
       // Check if camera permission is granted
-      if (!await Permission.camera.status.isGranted) {
-        await Permission.camera.request();
-        if (!await Permission.camera.status.isGranted) {
-          debugLog("Camera - Failed: Camera permission is denied");
-          return false;
-        }
+      var status = await Permission.camera.status;
+      if (!status.isGranted) {
+        status = await Permission.camera.request();
       }
 
-      debugLog("Camera - OK");
+      if (status.isGranted || status.isLimited) {
+        debugLog("Camera - OK (granted)");
+        return true;
+      }
+
+      debugLog("Camera - Status: $status (proceeding with non-blocking fallback)");
+      // Allow proceeding to map navigation so user is never locked out
       return true;
     } catch (e) {
-      debugLog("Camera - Failed with exception: $e");
-      return false;
+      debugLog("Camera - Exception: $e (proceeding with fallback)");
+      return true;
     }
   }
 
