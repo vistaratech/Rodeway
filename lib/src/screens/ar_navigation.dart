@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:cleadr/src/screens/loading.dart';
 import 'package:cleadr/src/services/ble_service.dart';
 import 'package:cleadr/src/services/location_service.dart';
@@ -7,6 +8,7 @@ import 'package:cleadr/src/util/functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_unity_widget/flutter_unity_widget.dart';
 import 'package:google_navigation_flutter/google_navigation_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ARNavigationScreen extends StatefulWidget {
   const ARNavigationScreen({super.key});
@@ -17,6 +19,7 @@ class ARNavigationScreen extends StatefulWidget {
 
 class _ARNavigationScreenState extends State<ARNavigationScreen> {
   bool _isLoading = true;
+  bool _hasCameraPermission = true;
 
   late final UnityWidget _unityWidget;
   UnityWidgetController? _unityWidgetController;
@@ -37,7 +40,31 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    _initUnity();
+    _checkPermissionAndInit();
+  }
+
+  Future<void> _checkPermissionAndInit() async {
+    try {
+      final status = await Permission.camera.status;
+      if (!status.isGranted) {
+        final result = await Permission.camera.request();
+        if (!result.isGranted) {
+          if (mounted) {
+            setState(() {
+              _hasCameraPermission = false;
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugLog("ARNavigationScreen: Camera permission check error: $e");
+    }
+
+    if (mounted) {
+      _initUnity();
+    }
   }
 
   @override
@@ -50,19 +77,114 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasCameraPermission) {
+      return _buildCameraPermissionFallback();
+    }
+
     return _isLoading
         ? const LoadingScreen()
         : _unityWidget;
   }
 
-  void _initUnity() {
-    _unityWidget = UnityWidget(onUnityCreated: (controller) {
-      _unityWidgetController = controller;
-      controller.resume();
+  Widget _buildCameraPermissionFallback() {
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 1.2,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.camera_alt_outlined,
+                      size: 54,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Camera Access Required',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'AR Navigation needs camera access to render 3D turn arrows and route paths over the live road view.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.settings, size: 18),
+                      label: const Text('Enable Camera Permission'),
+                      onPressed: () async {
+                        final req = await Permission.camera.request();
+                        if (req.isGranted) {
+                          setState(() {
+                            _hasCameraPermission = true;
+                            _isLoading = true;
+                          });
+                          _initUnity();
+                        } else {
+                          await openAppSettings();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-      // Send route path once Unity is ready
-      _fetchAndSendRoutePath();
-    });
+  void _initUnity() {
+    _unityWidget = UnityWidget(
+      onUnityCreated: (controller) {
+        _unityWidgetController = controller;
+        controller.resume();
+
+        // Send route path once Unity is ready
+        _fetchAndSendRoutePath();
+      },
+      useAndroidViewSurface: true,
+      fullscreen: true,
+      runImmediately: true,
+    );
 
     _navInfoSubscription?.cancel();
     _navInfoSubscription = GoogleMapsNavigator.setNavInfoListener(
@@ -223,11 +345,23 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
   }
 
   void _onNavInfoEvent(NavInfoEvent event) {
-    _lanes = event.navInfo.currentStep!.lanes;
+    if (event.navInfo.currentStep == null) return;
 
-    _maneuver = event.navInfo.currentStep!.maneuver.name;
+    _lanes = event.navInfo.currentStep?.lanes;
+
+    final rawManeuver = event.navInfo.currentStep?.maneuver.name ?? '';
     _distance = event.navInfo.distanceToCurrentStepMeters;
     _targetLane = _findTargetLane();
+
+    // Map Google Navigation SDK maneuver name to what Unity expects
+    final lower = rawManeuver.toLowerCase();
+    if (lower.contains('left') || lower.contains('counterclockwise')) {
+      _maneuver = 'turnLeft';
+    } else if (lower.contains('right') || lower.contains('clockwise')) {
+      _maneuver = 'turnRight';
+    } else {
+      _maneuver = 'straight';
+    }
 
     _flutterToUnityJsonMessage({
       "maneuver": _maneuver,
@@ -237,7 +371,7 @@ class _ARNavigationScreenState extends State<ARNavigationScreen> {
 
     // Send BLE turn command to ESP32 (triggered when within 120m/100m)
     BleService.instance.processManeuver(
-      _maneuver,
+      rawManeuver,
       distanceMeters: _distance,
     );
 

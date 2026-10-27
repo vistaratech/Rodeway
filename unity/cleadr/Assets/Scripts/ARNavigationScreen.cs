@@ -44,6 +44,19 @@ public class ARNavigationScreen : MonoBehaviour
 
     public void Start()
     {
+        if (routePathRenderer == null)
+        {
+            routePathRenderer = GetComponent<ARRoutePathRenderer>();
+            if (routePathRenderer == null)
+            {
+                routePathRenderer = gameObject.AddComponent<ARRoutePathRenderer>();
+            }
+            if (routePathRenderer != null && XROrigin != null)
+            {
+                routePathRenderer.XROrigin = XROrigin;
+            }
+        }
+
         renderTexture = new RenderTexture(width, height, 24); // RGB: 8 bits x 3 channels
         capturedTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
     }
@@ -88,7 +101,7 @@ public class ARNavigationScreen : MonoBehaviour
 #endif
             // Flutter to Unity JSON Message
             message = JsonConvert.DeserializeObject<Message>(jsonMessage);
-            debugText.text = "";
+            if (debugText != null) debugText.text = "";
 
 #if DEBUG
             DebugLog("jsonMessage received: " + jsonMessage);
@@ -96,91 +109,114 @@ public class ARNavigationScreen : MonoBehaviour
 #endif
 
             // Render AR Prefabs: Initialisation
-            // Initialise EulerRotation and 
+            if (XROrigin == null || XROrigin.Camera == null) return;
+
             eulerRotationArrow = eulerRotationLaneChange = eulerRotationDirectionalLight = XROrigin.Camera.transform.rotation.eulerAngles;
             eulerRotationDirectionalLight.x += 50; eulerRotationDirectionalLight.y += -30;
-            directionalLight.transform.position = XROrigin.Camera.transform.position + XROrigin.Camera.transform.up * 3.0f;
-            directionalLight.transform.rotation = Quaternion.Euler(eulerRotationDirectionalLight);
-
-            // Initialise Prefabs — disable all arrow prefabs (replaced by continuous blue line)
-            for (int prefab = 0; prefab < arrowPrefabs.Length; prefab++)
+            if (directionalLight != null)
             {
-                arrowPrefabs[prefab].SetActive(false);
+                directionalLight.transform.position = XROrigin.Camera.transform.position + XROrigin.Camera.transform.up * 3.0f;
+                directionalLight.transform.rotation = Quaternion.Euler(eulerRotationDirectionalLight);
             }
-            distancePrefab.SetActive(false);
-            if (message.target_lane == null)
+
+            // Initialise Prefabs — disable turn arrows initially
+            if (arrowPrefabs != null)
+            {
+                for (int prefab = 0; prefab < arrowPrefabs.Length; prefab++)
+                {
+                    if (arrowPrefabs[prefab] != null) arrowPrefabs[prefab].SetActive(false);
+                }
+            }
+            if (distancePrefab != null) distancePrefab.SetActive(false);
+            if (message.target_lane == null && laneChangePrefab != null)
             {
                 laneChangePrefab.SetActive(false);
             }
 
             // Initialise Maneuver
-            switch (message.maneuver)
+            bool isTurn = false;
+            string maneuverLower = (message.maneuver ?? "").ToLower();
+            if (maneuverLower.Contains("left") || maneuverLower.Contains("counterclockwise"))
             {
-                case "turnLeft":
-                    eulerRotationArrow.y += -90f;
-                    break;
-
-                case "turnRight":
-                    eulerRotationArrow.y += 90f;
-                    break;
-
-                default:
-                    return;
+                eulerRotationArrow.y += -90f;
+                isTurn = true;
+            }
+            else if (maneuverLower.Contains("right") || maneuverLower.Contains("clockwise"))
+            {
+                eulerRotationArrow.y += 90f;
+                isTurn = true;
             }
 
-            // Render AR Prefabs: Logic
-            // turnLeftRightPrefabs (shown alongside the continuous blue route line)
-            if (message.distance > 200 && message.distance <= 500)
+            // Render AR Turn Arrow Prefabs: Logic
+            if (isTurn && message.distance != null && arrowPrefabs != null && arrowPrefabs.Length >= 3)
             {
-                // blueArrowPrefab (turnLeftRightPrefabs[0])
-                arrowPrefabs[0].transform.position = XROrigin.Camera.transform.position
-                                                           + XROrigin.Camera.transform.forward * 16.0f
-                                                           + XROrigin.Camera.transform.up * 1.0f;
-                arrowPrefabs[0].transform.rotation = Quaternion.Euler(eulerRotationArrow);
+                if (message.distance > 200 && message.distance <= 500 && arrowPrefabs[0] != null)
+                {
+                    // blueArrowPrefab (arrowPrefabs[0])
+                    arrowPrefabs[0].transform.position = XROrigin.Camera.transform.position
+                                                               + XROrigin.Camera.transform.forward * 16.0f
+                                                               + XROrigin.Camera.transform.up * 1.0f;
+                    arrowPrefabs[0].transform.rotation = Quaternion.Euler(eulerRotationArrow);
 
-                distancePrefab.transform.position = XROrigin.Camera.transform.position
-                                                  + XROrigin.Camera.transform.forward * 16.0f
-                                                  + XROrigin.Camera.transform.up * 0.3f;
+                    if (distancePrefab != null)
+                    {
+                        distancePrefab.transform.position = XROrigin.Camera.transform.position
+                                                          + XROrigin.Camera.transform.forward * 16.0f
+                                                          + XROrigin.Camera.transform.up * 0.3f;
+                    }
 
-                arrowPrefabs[0].SetActive(true);
+                    arrowPrefabs[0].SetActive(true);
+                }
+                else if (message.distance > 50 && message.distance <= 200 && arrowPrefabs[1] != null)
+                {
+                    // yellowArrowPrefab (arrowPrefabs[1])
+                    arrowPrefabs[1].transform.position = XROrigin.Camera.transform.position
+                                                               + XROrigin.Camera.transform.forward * 8.0f
+                                                               + XROrigin.Camera.transform.up * 1.0f;
+                    arrowPrefabs[1].transform.rotation = Quaternion.Euler(eulerRotationArrow);
+
+                    if (distancePrefab != null)
+                    {
+                        distancePrefab.transform.position = XROrigin.Camera.transform.position
+                                                          + XROrigin.Camera.transform.forward * 8.0f
+                                                          + XROrigin.Camera.transform.up * 0.3f;
+                    }
+
+                    arrowPrefabs[1].SetActive(true);
+                }
+                else if (message.distance > 0 && message.distance <= 50 && arrowPrefabs[2] != null)
+                {
+                    // redArrowPrefab (arrowPrefabs[2])
+                    arrowPrefabs[2].transform.position = XROrigin.Camera.transform.position
+                                                               + XROrigin.Camera.transform.forward * 4.0f
+                                                               + XROrigin.Camera.transform.up * 0.5f;
+                    arrowPrefabs[2].transform.rotation = Quaternion.Euler(eulerRotationArrow);
+
+                    if (distancePrefab != null)
+                    {
+                        distancePrefab.transform.position = XROrigin.Camera.transform.position
+                                                          + XROrigin.Camera.transform.forward * 4.0f
+                                                          + XROrigin.Camera.transform.up * -0.2f;
+                    }
+
+                    arrowPrefabs[2].SetActive(true);
+                }
             }
-            else if (message.distance > 50 && message.distance <= 200)
+
+            // distancePrefab display
+            if (distancePrefab != null && message.distance != null && message.distance > 0)
             {
-                // yellowArrowPrefab (turnLeftRightPrefabs[1])
-                arrowPrefabs[1].transform.position = XROrigin.Camera.transform.position
-                                                           + XROrigin.Camera.transform.forward * 8.0f
-                                                           + XROrigin.Camera.transform.up * 1.0f;
-                arrowPrefabs[1].transform.rotation = Quaternion.Euler(eulerRotationArrow);
-
-                distancePrefab.transform.position = XROrigin.Camera.transform.position
-                                                  + XROrigin.Camera.transform.forward * 8.0f
-                                                  + XROrigin.Camera.transform.up * 0.3f;
-
-                arrowPrefabs[1].SetActive(true);
+                var tmpText = distancePrefab.GetComponentInChildren<TextMeshPro>();
+                if (tmpText != null)
+                {
+                    tmpText.text = (message.distance).ToString() + "m";
+                }
+                distancePrefab.transform.rotation = Quaternion.Euler(eulerRotationLaneChange);
+                distancePrefab.SetActive(true);
             }
-            else if (message.distance > 0 && message.distance <= 50)
-            {
-                // redArrowPrefab (turnLeftRightPrefabs[2])
-                arrowPrefabs[2].transform.position = XROrigin.Camera.transform.position
-                                                           + XROrigin.Camera.transform.forward * 4.0f
-                                                           + XROrigin.Camera.transform.up * 0.5f;
-                arrowPrefabs[2].transform.rotation = Quaternion.Euler(eulerRotationArrow);
-
-                distancePrefab.transform.position = XROrigin.Camera.transform.position
-                                                  + XROrigin.Camera.transform.forward * 4.0f
-                                                  + XROrigin.Camera.transform.up * -0.2f;
-
-                arrowPrefabs[2].SetActive(true);
-            }
-
-            // distancePrefab
-            distancePrefab.GetComponentInChildren<TextMeshPro>().text = (message.distance).ToString() + "m";
-            distancePrefab.transform.rotation = Quaternion.Euler(eulerRotationLaneChange); // Unaltered eulerRotation
-            distancePrefab.SetActive(true);
-
 
             // laneChangePrefab
-            if (message.target_lane != null)
+            if (message.target_lane != null && laneChangePrefab != null)
             {
                 // target_lane_model
                 if (interpreter == null)

@@ -82,7 +82,9 @@ class _NavigationScreenState extends State<NavigationScreen>
 
             // Mode 2: AR View
             if (_currentMode == NavigationMode.ar)
-              const ARNavigationScreen(),
+              const Positioned.fill(
+                child: ARNavigationScreen(),
+              ),
 
             // Mode 3: Drone Autopilot HUD Overlay
             if (_currentMode == NavigationMode.drone)
